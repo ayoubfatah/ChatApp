@@ -1,29 +1,23 @@
 "use client";
 
-import { SignInButton, UserButton } from "@clerk/nextjs";
-import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
-
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import LoadingLogo from "@/components/shared/LoadingLogo";
 
 export default function Home() {
-  return (
-    <>
-      <Authenticated>
-        <div className="w-full py-4 flex justify-around items-center">
-          <UserButton />
-          <Content />
-        </div>
-      </Authenticated>
-      <AuthLoading>
-        <LoadingLogo />
-      </AuthLoading>
-      <Unauthenticated>
-        <SignInButton />
-      </Unauthenticated>
-    </>
-  );
-}
+  const { isLoaded, userId } = useAuth();
+  const router = useRouter();
 
-function Content() {
-  return <div className=""></div>;
+  useEffect(() => {
+    if (isLoaded && userId) {
+      router.push("/conversations");
+    }
+  }, [isLoaded, userId, router]);
+
+  if (!isLoaded) {
+    return <LoadingLogo />;
+  }
+
+  return null;
 }
