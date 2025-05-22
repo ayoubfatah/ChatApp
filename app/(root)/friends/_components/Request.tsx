@@ -45,7 +45,7 @@ export default function Request({ id, imgUrl, username, email }: props) {
   }
 
   return (
-    <Card className="w-full py-3 ">
+    <Card className="w-full  py-3 ">
       <CardHeader className="flex items-center px-2 ">
         <Avatar>
           <AvatarImage src={imgUrl} />

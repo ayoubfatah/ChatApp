@@ -39,6 +39,43 @@ export const get = query({
   },
 });
 
+export const getSentRequests = query({
+  args: {},
+
+  async handler(ctx) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Unauthorized");
+    }
+
+    const currentUser = await getUserByClerkId({
+      ctx,
+      clerkId: identity.subject,
+    });
+
+    if (!currentUser) {
+      throw new ConvexError("User not found in requests");
+    }
+
+    const requests = await ctx.db
+      .query("requests")
+      .withIndex("by_sender", (q) => q.eq("sender", currentUser._id))
+      .collect();
+
+    const requestsWithSender = await Promise.all(
+      requests.map(async (request) => {
+        const receiver = await ctx.db.get(request.receiver);
+
+        if (!receiver) {
+          throw new ConvexError("Request  not found");
+        }
+        return { receiver, request };
+      })
+    );
+    return requestsWithSender;
+  },
+});
+
 export const count = query({
   args: {},
 

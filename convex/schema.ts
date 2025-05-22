@@ -15,6 +15,7 @@ export default defineSchema({
     receiver: v.id("users"),
   })
     .index("by_receiver", ["receiver"])
+    .index("by_sender", ["sender"])
     .index("by_receiver_sender", ["receiver", "sender"]),
   friends: defineTable({
     user1: v.id("users"),

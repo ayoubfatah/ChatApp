@@ -6,16 +6,18 @@ import AddFriendDialog from "./_components/AddFriendDialog";
 import { api } from "@/convex/_generated/api";
 import { Loader2 } from "lucide-react";
 import Request from "./_components/Request";
+import SentRequest from "./_components/SentRequest";
 
 export default function FriendsPage() {
   const requests = useQuery(api.requests.get);
+  const requestsSent = useQuery(api.requests.getSentRequests);
 
   return (
     <>
       <ItemList title="Friends" action={<AddFriendDialog />}>
         {requests ? (
           requests.length === 0 ? (
-            <p className="w-full h-full flex items-center justify-center">
+            <p className="w-full flex items-center justify-center">
               No friend Request found
             </p>
           ) : (
@@ -34,6 +36,22 @@ export default function FriendsPage() {
         ) : (
           <Loader2 className="size-4 animate-spin" />
         )}
+        <div className="mt-auto w-full">
+          {requestsSent && requestsSent.length > 0 && (
+            <div className="w-full -translate-y-[80px] p-4 border border-card rounded-sm mt-auto">
+              <h3 className="text-md font-semibold mb-3">Requests Sent:</h3>
+              <div className="space-y-2">
+                {requestsSent.map((request) => (
+                  <SentRequest
+                    key={request.request._id}
+                    receiver={request.receiver}
+                    request={request.request}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </ItemList>
       <ConversationFallback />
     </>

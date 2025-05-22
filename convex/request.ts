@@ -143,3 +143,26 @@ export const accept = mutation({
     await ctx.db.delete(request._id);
   },
 });
+
+export const deleteSentRequest = mutation({
+  args: {
+    id: v.id("requests"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("unauthorized");
+    }
+
+    const currentUser = await getUserByClerkId({
+      ctx,
+      clerkId: identity.subject,
+    });
+    if (!currentUser) {
+      throw new ConvexError("user not found");
+    }
+    const request = await ctx.db.get(args.id);
+
+    await ctx.db.delete(request._id);
+  },
+});
