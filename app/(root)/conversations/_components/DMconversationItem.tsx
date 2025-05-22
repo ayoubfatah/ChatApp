@@ -9,11 +9,15 @@ type DMconversationItemProps = {
   id: Id<"conversations">;
   imgUrl: string;
   username: string;
+  lastMessageSender?: string;
+  lastMessageContent?: string;
 };
 export default function DMconversationItem({
   id,
   imgUrl,
   username,
+  lastMessageContent,
+  lastMessageSender,
 }: DMconversationItemProps) {
   return (
     <Link href={`/conversations/${id}`} className="w-full">
@@ -30,9 +34,21 @@ export default function DMconversationItem({
           </div>
           <div className="flex flex-col truncate">
             <h4 className="truncate">{username}</h4>
-            <p className="text-sm text-muted-foreground truncate">
-              Start the conversation
-            </p>
+            {lastMessageSender && lastMessageContent ? (
+              <span className="text-sm text-muted-foreground flex truncate overflow-ellipsis">
+                <p className="font-semibold">
+                  {lastMessageSender}
+                  {":"}&nbsp;
+                </p>
+                <p className="truncate overflow-ellipsis">
+                  {lastMessageContent}
+                </p>
+              </span>
+            ) : (
+              <p className="text-sm text-muted-foreground truncate">
+                Start the conversation
+              </p>
+            )}
           </div>
         </div>
       </Card>

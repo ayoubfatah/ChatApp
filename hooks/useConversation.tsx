@@ -4,6 +4,7 @@ import { useMemo } from "react";
 
 export default function useConversation() {
   const params = useParams();
+
   const conversationId = useMemo(
     () => params?.conversationId || ("" as string),
     [params?.conversationId]

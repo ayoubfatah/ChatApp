@@ -12,3 +12,13 @@ export const getUserByClerkId = async ({
     .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkId))
     .unique();
 };
+
+export const getMessagesContent = (type: string, content: string) => {
+  console.log("TYPPPPPE DZBBBB", type);
+  switch (type) {
+    case "text":
+      return content;
+    default:
+      return "[Non-text]";
+  }
+};

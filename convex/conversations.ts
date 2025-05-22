@@ -1,6 +1,8 @@
 import { ConvexError } from "convex/values";
 import { query } from "./_generated/server";
-import { getUserByClerkId } from "./_utils";
+import { getMessagesContent, getUserByClerkId } from "./_utils";
+import { QueryCtx, MutationCtx } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 
 export const get = query({
   args: {},
@@ -35,6 +37,7 @@ export const get = query({
         if (!conversation) {
           throw new ConvexError("conversation couldn't be found");
         }
+
         return conversation;
       })
     );
@@ -50,10 +53,14 @@ export const get = query({
           )
           .collect();
 
+        const lastMessage = await getLastMessageDetails({
+          ctx,
+          id: conversation.lastMessageId,
+        });
         // 5b. Handle group conversations differently from direct messages
         if (conversation.isGroup) {
           // For group chats, just return the conversation
-          return { conversation };
+          return { conversation, lastMessage };
         } else {
           // For direct messages, find the other person in the conversation
           const otherMembership = allConversationMemberships.filter(
@@ -64,9 +71,30 @@ export const get = query({
           return {
             conversation,
             otherMember, // Include the other user's details (username, imgUrl, etc.)
+            lastMessage,
           };
         }
       })
     );
   },
 });
+
+const getLastMessageDetails = async ({
+  ctx,
+  id,
+}: {
+  ctx: QueryCtx | MutationCtx;
+  id: Id<"messages"> | undefined;
+}) => {
+  if (!id) return null;
+  const message = await ctx.db.get(id);
+  if (!message) return null;
+  const sender = await ctx.db.get(message.senderId);
+  if (!sender) return null;
+  const content = getMessagesContent(
+    message.type,
+    message.content as unknown as string
+  );
+  console.log(message.type, "waatyppe a bikhan");
+  return { content, sender: sender.username };
+};

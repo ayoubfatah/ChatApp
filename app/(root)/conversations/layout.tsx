@@ -29,6 +29,8 @@ export default function ConversationsLayout({
                   id={conversation?.conversation?._id}
                   imgUrl={conversation?.otherMember?.imgUrl}
                   username={conversation?.otherMember?.username || ""}
+                  lastMessageContent={conversation.lastMessage.content}
+                  lastMessageSender={conversation.lastMessage.sender}
                 />
               );
             })

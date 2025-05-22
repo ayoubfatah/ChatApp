@@ -38,7 +38,7 @@ export default function FriendsPage() {
         )}
         <div className="mt-auto w-full">
           {requestsSent && requestsSent.length > 0 && (
-            <div className="w-full -translate-y-[80px] p-4 border border-card rounded-sm mt-auto">
+            <div className="w-full -translate-y-[80px] p-2 border border-card rounded-sm mt-auto">
               <h3 className="text-md font-semibold mb-3">Requests Sent:</h3>
               <div className="space-y-2">
                 {requestsSent.map((request) => (
