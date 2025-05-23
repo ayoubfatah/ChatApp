@@ -21,7 +21,8 @@ export default function Body() {
           createdAt={message.message._creationTime}
           fromCurrentUser={message.isCurrentUser}
           lastByUser={
-            messages[i - 1]?.message.senderId === messages[i].message.senderId
+            i === messages.length - 1 ||
+            messages[i + 1]?.message.senderId !== messages[i].message.senderId
           }
           senderImage={message.senderImage}
           senderName={message.senderName || ""}

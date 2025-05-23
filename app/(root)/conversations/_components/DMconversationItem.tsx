@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Id } from "@/convex/_generated/dataModel";
+import { useUser } from "@clerk/nextjs";
 import { User } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -12,6 +13,7 @@ type DMconversationItemProps = {
   lastMessageSender?: string;
   lastMessageContent?: string;
 };
+
 export default function DMconversationItem({
   id,
   imgUrl,
@@ -19,6 +21,9 @@ export default function DMconversationItem({
   lastMessageContent,
   lastMessageSender,
 }: DMconversationItemProps) {
+  const { user } = useUser();
+  const isCurrentUser = lastMessageSender === user?.id;
+
   return (
     <Link href={`/conversations/${id}`} className="w-full">
       <Card className="p-2 flex flex-row items-center gap-4 truncate rounded-sm">
@@ -37,7 +42,7 @@ export default function DMconversationItem({
             {lastMessageSender && lastMessageContent ? (
               <span className="text-sm text-muted-foreground flex truncate overflow-ellipsis">
                 <p className="font-semibold">
-                  {lastMessageSender}
+                  {isCurrentUser ? "You" : username}
                   {":"}&nbsp;
                 </p>
                 <p className="truncate overflow-ellipsis">

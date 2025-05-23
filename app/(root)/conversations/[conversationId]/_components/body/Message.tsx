@@ -21,6 +21,8 @@ export default function Message({
   senderName,
   type,
 }: Message) {
+  console.log(content);
+  console.log(lastByUser, "usss");
   return (
     <div
       className={cn(
