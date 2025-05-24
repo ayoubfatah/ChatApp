@@ -95,6 +95,6 @@ const getLastMessageDetails = async ({
     message.type,
     message.content as unknown as string
   );
-  console.log(message.type, "waatyppe a bikhan");
+
   return { content, sender: sender.username };
 };

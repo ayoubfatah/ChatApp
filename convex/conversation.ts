@@ -57,7 +57,7 @@ export const get = query({
         },
         otherMembers: null,
       };
-      console.log("Returning non-group conversation data:", returnData);
+
       return returnData;
     }
 
@@ -80,7 +80,7 @@ export const get = query({
       otherMember: null,
       otherMembers: membersWithDetails,
     };
-    console.log("Returning group conversation data:", groupReturnData);
+
     return groupReturnData;
   },
 });

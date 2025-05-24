@@ -68,11 +68,11 @@ const handleClerkWebHook = httpAction(async (ctx, req) => {
       console.log("Clerk webhook event not supported:", event.type);
     }
   }
-
   return new Response(null, {
     status: 200,
   });
 });
+
 
 const http = httpRouter();
 http.route({

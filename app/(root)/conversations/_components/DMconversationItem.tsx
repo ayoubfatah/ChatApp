@@ -1,10 +1,14 @@
+"use client";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Id } from "@/convex/_generated/dataModel";
-import { useUser } from "@clerk/nextjs";
 import { User } from "lucide-react";
 import Link from "next/link";
 import React from "react";
+import { useAuth } from "@clerk/nextjs";
+import { api } from "@/convex/_generated/api";
+import { useQuery } from "convex/react";
 
 type DMconversationItemProps = {
   id: Id<"conversations">;
@@ -21,8 +25,9 @@ export default function DMconversationItem({
   lastMessageContent,
   lastMessageSender,
 }: DMconversationItemProps) {
-  const { user } = useUser();
-  const isCurrentUser = lastMessageSender === user?.id;
+  const { userId } = useAuth();
+  const user = useQuery(api.users.get, { clerkId: userId });
+  const currentUserUsername = user?.username;
 
   return (
     <Link href={`/conversations/${id}`} className="w-full">
@@ -42,8 +47,7 @@ export default function DMconversationItem({
             {lastMessageSender && lastMessageContent ? (
               <span className="text-sm text-muted-foreground flex truncate overflow-ellipsis">
                 <p className="font-semibold">
-                  {isCurrentUser ? "You" : username}
-                  {":"}&nbsp;
+                  {lastMessageSender === currentUserUsername ? "You :" : ""}
                 </p>
                 <p className="truncate overflow-ellipsis">
                   {lastMessageContent}

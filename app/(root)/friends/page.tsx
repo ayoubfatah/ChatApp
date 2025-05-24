@@ -10,6 +10,7 @@ import SentRequest from "./_components/SentRequest";
 
 export default function FriendsPage() {
   const requests = useQuery(api.requests.get);
+  
   const requestsSent = useQuery(api.requests.getSentRequests);
 
   return (

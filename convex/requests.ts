@@ -4,27 +4,28 @@ import { getUserByClerkId } from "./_utils";
 
 export const get = query({
   args: {},
-
   async handler(ctx) {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError("Unauthorized");
     }
-
+    // getting current user
     const currentUser = await getUserByClerkId({
       ctx,
       clerkId: identity.subject,
     });
-
+    
     if (!currentUser) {
       throw new ConvexError("User not found in requests");
     }
 
+    // getting all requests where the current user is the receiver
     const requests = await ctx.db
       .query("requests")
       .withIndex("by_receiver", (q) => q.eq("receiver", currentUser._id))
       .collect();
 
+    // getting the sender of the request
     const requestsWithSender = await Promise.all(
       requests.map(async (request) => {
         const sender = await ctx.db.get(request.sender);
@@ -41,7 +42,6 @@ export const get = query({
 
 export const getSentRequests = query({
   args: {},
-
   async handler(ctx) {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -84,7 +84,7 @@ export const count = query({
     if (!identity) {
       throw new ConvexError("Unauthorized");
     }
-
+    // getting current user
     const currentUser = await getUserByClerkId({
       ctx,
       clerkId: identity.subject,
@@ -94,11 +94,13 @@ export const count = query({
       throw new ConvexError("User not found in requests");
     }
 
+    // getting all requests where the current user is the receiver
     const requests = await ctx.db
       .query("requests")
       .withIndex("by_receiver", (q) => q.eq("receiver", currentUser._id))
       .collect();
 
+    // returning the number of requests
     return requests.length;
   },
 });

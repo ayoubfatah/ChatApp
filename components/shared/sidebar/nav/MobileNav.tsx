@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 export default function MobileNav() {
   const { paths } = useNavigation();
   const { isActive } = useConversation();
-  console.log(paths);
+
   if (isActive) return null;
   return (
     <Card className="fixed bottom-4 w-[calc(100vw-32px)] flex items-center h-16 p-2 lg:hidden">

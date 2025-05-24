@@ -7,6 +7,7 @@ export const create = mutation({
     email: v.string(),
   },
   handler: async (ctx, args) => {
+    // User is authenticated
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError("unauthorized");
@@ -14,21 +15,26 @@ export const create = mutation({
     if (identity.email === args.email) {
       throw new ConvexError("Can't send a  request to yourself");
     }
+    // getting current user
     const currentUser = await getUserByClerkId({
       ctx,
       clerkId: identity.subject,
     });
+    // checking if currentUser exists
     if (!currentUser) {
       throw new ConvexError("user not found");
     }
+    // getting the receiver
     const receiver = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .unique();
-
+    // checking if receiver exists
     if (!receiver) {
       throw new ConvexError("user not found");
     }
+
+    // CHECKING if both the receiver and sender didnt get the  request
     const requestAlreadySent = await ctx.db
       .query("requests")
       .withIndex("by_receiver_sender", (q) =>
@@ -36,10 +42,12 @@ export const create = mutation({
       )
       .unique();
 
+    // throw an error if there is a request already sent
     if (requestAlreadySent) {
       throw new ConvexError("Friend Request Already Sent");
     }
 
+    // checking if the receiver has already sent a request to the sender
     const requestAlreadyReceived = await ctx.db
       .query("requests")
       .withIndex("by_receiver_sender", (q) =>
@@ -49,8 +57,7 @@ export const create = mutation({
     if (requestAlreadyReceived) {
       throw new ConvexError("This User already sent you a request");
     }
-
-    // getting all friends off user creating the request
+    // getting all friends of the sender
     const friends1 = await ctx.db
       .query("friends")
       .withIndex("by_user1", (q) => q.eq("user1", currentUser._id))
@@ -66,6 +73,7 @@ export const create = mutation({
     ) {
       throw new ConvexError("You are already friend with this user");
     }
+    // creating the request
     const request = await ctx.db.insert("requests", {
       sender: currentUser._id,
       receiver: receiver._id,
@@ -79,22 +87,27 @@ export const deny = mutation({
     id: v.id("requests"),
   },
   handler: async (ctx, args) => {
+    // User is authenticated
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError("unauthorized");
     }
-
+    // getting current user
     const currentUser = await getUserByClerkId({
       ctx,
       clerkId: identity.subject,
     });
+    // checking if currentUser exists
     if (!currentUser) {
       throw new ConvexError("user not found");
     }
+    // getting the request
     const request = await ctx.db.get(args.id);
+    // checking if the request exists and the receiver is the current user
     if (!request || request.receiver !== currentUser._id) {
       throw new ConvexError("There was an error denying this request");
     }
+    // deleting the request
     await ctx.db.delete(request._id);
   },
 });
@@ -103,43 +116,50 @@ export const accept = mutation({
   args: {
     id: v.id("requests"),
   },
+  // User is authenticated
   handler: async (ctx, args) => {
+    // getting current user
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError("unauthorized");
     }
-
+    // getting current user
     const currentUser = await getUserByClerkId({
       ctx,
       clerkId: identity.subject,
     });
+    // checking if currentUser exists
     if (!currentUser) {
       throw new ConvexError("user not found");
     }
+    // getting the request
     const request = await ctx.db.get(args.id);
-
+    // checking if the request exists and the receiver is the current user
     if (!request || request.receiver !== currentUser._id) {
       throw new ConvexError("There was an error Accepting this request");
     }
+    // creating the conversation
     const conversationId = await ctx.db.insert("conversations", {
       isGroup: false,
     });
 
+    // creating the friend
     await ctx.db.insert("friends", {
       user1: currentUser._id,
       user2: request.sender,
       conversationId,
     });
-
+    // creating the friend
     await ctx.db.insert("conversationMembers", {
       memberId: currentUser._id,
       conversationId,
     });
+    // creating the conversation member
     await ctx.db.insert("conversationMembers", {
       memberId: request.sender,
       conversationId,
     });
-
+    // deleting the request
     await ctx.db.delete(request._id);
   },
 });

@@ -14,7 +14,6 @@ export const getUserByClerkId = async ({
 };
 
 export const getMessagesContent = (type: string, content: string) => {
-  console.log("TYPPPPPE DZBBBB", type);
   switch (type) {
     case "text":
       return content;
