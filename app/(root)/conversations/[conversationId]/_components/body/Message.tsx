@@ -11,7 +11,12 @@ type Message = {
   content: string[];
   createdAt: number;
   type: string;
+  isLastMessage: boolean;
+  messageId: string;
+  messages: any[];
+  currentUserId: string;
 };
+
 export default function Message({
   content,
   createdAt,
@@ -20,9 +25,19 @@ export default function Message({
   senderImage,
   senderName,
   type,
+  isLastMessage,
+  messageId,
+  messages,
+  currentUserId,
 }: Message) {
-  console.log(content);
-  console.log(lastByUser, "usss");
+  const isLastMessageByUser = (
+    messageId: string,
+    messages: any[],
+    currentUserId: string
+  ) =>
+    messages?.find((m) => m.message.senderId === currentUserId)?.message._id ===
+    messageId;
+
   return (
     <div
       className={cn(
@@ -31,7 +46,7 @@ export default function Message({
       )}
     >
       {!fromCurrentUser && (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 translate-y-[-15px]">
           {lastByUser && (
             <Avatar>
               <AvatarImage src={senderImage} alt={senderName} />
@@ -43,27 +58,30 @@ export default function Message({
       )}
       <div
         className={cn(
-          "flex flex-col gap-1",
+          "flex flex-col ",
           fromCurrentUser ? "items-end" : "items-start"
         )}
       >
-        {!fromCurrentUser && lastByUser && (
-          <p className="text-sm text-muted-foreground">{senderName}</p>
-        )}
         <div
           className={cn(
             "rounded-lg px-4 py-2",
             fromCurrentUser ? "bg-primary text-primary-foreground" : "bg-muted",
-            type === "text" && "text-wrap break-words whitespace-pre-wrap"
+            type === "text" && "text-wrap break-words whitespace-pre-wrap",
+            lastByUser && !fromCurrentUser && "rounded-tl-none",
+            isLastMessage && fromCurrentUser && "rounded-br-none"
           )}
         >
           {content.map((text, i) => (
             <p key={i}>{text}</p>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground">
-          {formatDistanceToNow(createdAt, { addSuffix: true })}
-        </p>
+        <div className="flex items-center gap-2">
+          {isLastMessageByUser(messageId, messages, currentUserId) && (
+            <p className="text-[9px]  text-muted-foreground">
+              {formatDistanceToNow(createdAt, { addSuffix: true })}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

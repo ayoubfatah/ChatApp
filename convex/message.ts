@@ -24,7 +24,7 @@ export const create = mutation({
     if (!currentUser) {
       throw new ConvexError("User not found in requests");
     }
-
+    // getting the memberShip of the current user in the conversation
     const memberShip = await ctx.db
       .query("conversationMembers")
       .withIndex("by_memberId_conversationId", (q) =>
@@ -36,6 +36,7 @@ export const create = mutation({
     if (!memberShip) {
       throw new ConvexError("You aren't a member of this conversation");
     }
+    // creating the message
     const message = await ctx.db.insert("messages", {
       senderId: currentUser._id,
       ...args,

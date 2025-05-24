@@ -6,13 +6,11 @@ export const get = query({
   args: {
     conversationId: v.id("conversations"),
   },
-
   async handler(ctx, args) {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError("Unauthorized");
     }
-
     const currentUser = await getUserByClerkId({
       ctx,
       clerkId: identity.subject,
@@ -21,11 +19,12 @@ export const get = query({
     if (!currentUser) {
       throw new ConvexError("User not found in requests");
     }
-
+// getting conversation details from the conversationId
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) {
       throw new ConvexError("Conversation not found");
     }
+    // getting the memberShip of the current user in the conversation
     const memberShip = await ctx.db
       .query("conversationMembers")
       .withIndex("by_memberId_conversationId", (q) =>
@@ -37,6 +36,7 @@ export const get = query({
       throw new ConvexError("You are not a member of this conversation");
     }
 
+    // getting all the members of the conversation
     const allConversationMemberships = await ctx.db
       .query("conversationMembers")
       .withIndex("by_conversationId", (q) =>
@@ -44,11 +44,14 @@ export const get = query({
       )
       .collect();
 
+    // if the conversation is not a group, we get the other member of the conversation
     if (!conversation.isGroup) {
       const otherMembership = allConversationMemberships.filter(
         (ms) => ms.memberId !== currentUser._id
       )[0];
       const otherMemberDetails = await ctx.db.get(otherMembership.memberId);
+      
+      // returning the conversation details with the other member details
       const returnData = {
         ...conversation,
         otherMember: {

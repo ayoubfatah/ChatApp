@@ -22,9 +22,7 @@ export const get = query({
     if (!currentUser) {
       throw new ConvexError("User not found in requests");
     }
-
     // 3. Get all conversation memberships where the current user is a member
-
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_conversationId", (q) =>
@@ -33,6 +31,7 @@ export const get = query({
       .order("desc")
       .collect();
 
+    // getting the memberShip of the current user in the conversation
     const memberShip = await ctx.db
       .query("conversationMembers")
       .withIndex("by_memberId_conversationId", (q) =>
@@ -44,6 +43,7 @@ export const get = query({
     if (!memberShip) {
       throw new ConvexError("You aren't a member of this conversation");
     }
+    // getting the messages with the sender details
     const messagesWithUsers = await Promise.all(
       messages.map(async (message) => {
         const messageSender = await ctx.db.get(message.senderId);

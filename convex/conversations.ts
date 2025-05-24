@@ -13,7 +13,6 @@ export const get = query({
     if (!identity) {
       throw new ConvexError("Unauthorized");
     }
-
     // 2. Get the current user's details from our database using their Clerk ID
     const currentUser = await getUserByClerkId({
       ctx,
@@ -23,13 +22,11 @@ export const get = query({
     if (!currentUser) {
       throw new ConvexError("User not found in requests");
     }
-
     // 3. Get all conversation memberships where the current user is a member
     const conversationMemberships = await ctx.db
       .query("conversationMembers")
       .withIndex("by_memberId", (q) => q.eq("memberId", currentUser._id))
       .collect();
-
     // 4. Get all conversations from the memberships
     const conversations = await Promise.all(
       conversationMemberships?.map(async (membership) => {
@@ -41,7 +38,6 @@ export const get = query({
         return conversation;
       })
     );
-
     // 5. For each conversation, get additional details
     return Promise.all(
       conversations.map(async (conversation) => {

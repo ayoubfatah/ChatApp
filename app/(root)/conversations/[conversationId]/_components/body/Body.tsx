@@ -3,11 +3,11 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import useConversation from "@/hooks/useConversation";
 import { useQuery } from "convex/react";
-import React from "react";
 import Message from "./Message";
 
 export default function Body() {
   const { conversationId } = useConversation();
+
   const messages = useQuery(api.messages.get, {
     conversationId: conversationId as Id<"conversations">,
   });
@@ -27,6 +27,10 @@ export default function Body() {
           senderImage={message.senderImage}
           senderName={message.senderName || ""}
           type={message.message.type}
+          isLastMessage={i === 0}
+          messageId={message.message._id}
+          messages={messages}
+          currentUserId={message.message.senderId}
         />
       ))}
     </div>
