@@ -12,7 +12,6 @@ export default function ConversationsLayout({
   children: ReactNode;
 }) {
   const conversations = useQuery(api.conversations.get);
-  console.log(conversations, "conversations");
   return (
     <>
       <ItemList title="Conversations">

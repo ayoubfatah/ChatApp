@@ -43,7 +43,8 @@ export default function ConversationPage({
         name={
           conversation.isGroup ? null : conversation.otherMember.username || ""
         }
-      ></Header>
+        conversationId={conversationId}
+      />
       <Body></Body>
       <ChatInput />
     </ConversationContainer>
