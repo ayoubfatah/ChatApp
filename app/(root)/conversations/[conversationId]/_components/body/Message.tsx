@@ -1,21 +1,14 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatDistanceToNow } from "date-fns";
-import { cn } from "@/lib/utils";
-import React from "react";
-import { Edit, Reply } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-type MessageContent = {
-  message: {
-    _id: string;
-    senderId: string;
-  };
-};
+import { cn } from "@/lib/utils";
+import { useMessageStore } from "@/store/useMessageStore";
+import { formatDistanceToNow } from "date-fns";
+import { Edit, Reply } from "lucide-react";
 
 type Message = {
   fromCurrentUser: boolean;
@@ -27,8 +20,8 @@ type Message = {
   type: string;
   isLastMessage: boolean;
   messageId: string;
-  messages: MessageContent[];
-  currentUserId: string;
+  isEdited: boolean;
+  replyTo?: { messageId: string; content: string[] };
 };
 
 export default function Message({
@@ -41,16 +34,21 @@ export default function Message({
   type,
   isLastMessage,
   messageId,
-  messages,
-  currentUserId,
+  isEdited,
+  replyTo,
 }: Message) {
-  const isLastMessageByUser = (
-    messageId: string,
-    messages: MessageContent[],
-    currentUserId: string
-  ) =>
-    messages?.find((m) => m.message.senderId === currentUserId)?.message._id ===
-    messageId;
+  const { setEditMessage, setIsEditingMessage, setReplyTo, setIsReplying } =
+    useMessageStore();
+
+  const handleEdit = () => {
+    setEditMessage(messageId);
+    setIsEditingMessage(true);
+  };
+
+  const handleReply = () => {
+    setReplyTo({ messageId, content });
+    setIsReplying(true);
+  };
 
   return (
     <DropdownMenu>
@@ -78,6 +76,11 @@ export default function Message({
               fromCurrentUser ? "items-end" : "items-start"
             )}
           >
+            {replyTo && replyTo.content && replyTo.content.length > 0 && (
+              <div className="text-[10px] text-muted-foreground mb-1">
+                Replying to: {replyTo.content[0]}
+              </div>
+            )}
             <div
               className={cn(
                 "rounded-lg px-4 py-2",
@@ -90,32 +93,43 @@ export default function Message({
               )}
             >
               {content.map((text, i) => (
-                <p className="" key={i}>
-                  {text}
-                </p>
+                <div key={i}>
+                  <p className="">{text}</p>
+                </div>
               ))}
+              <p
+                className={cn(
+                  "text-[9px]",
+                  fromCurrentUser
+                    ? "text-primary-foreground"
+                    : "text-muted-foreground"
+                )}
+              >
+                {formatDistanceToNow(createdAt, {
+                  addSuffix: true,
+                })}
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              {isLastMessageByUser(messageId, messages, currentUserId) && (
-                <p className="text-[9px] text-muted-foreground">
-                  {formatDistanceToNow(createdAt, { addSuffix: true })}
-                </p>
-              )}
-            </div>
+            {!fromCurrentUser && isEdited && (
+              <span className="text-[9px] text-muted-foreground ml-1">
+                (edited)
+              </span>
+            )}
           </div>
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align={fromCurrentUser ? "start" : "end"}
         className="w-40"
+        side={fromCurrentUser ? "left" : "right"}
       >
         {fromCurrentUser && (
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={handleEdit}>
             <Edit className="size-4 mr-2" />
             Edit
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleReply}>
           <Reply className="size-4 mr-2" />
           Reply
         </DropdownMenuItem>

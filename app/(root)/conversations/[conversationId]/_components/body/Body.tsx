@@ -16,6 +16,18 @@ export default function Body() {
     <div className="flex-1 w-full flex overflow-y-scroll flex-col-reverse gap-2 p-3 no-scrollbar">
       {messages?.map((message, i) => (
         <Message
+          replyTo={
+            message.message.replyTo
+              ? {
+                  messageId: message.message.replyTo,
+                  content:
+                    messages.find(
+                      (m) => m.message._id === message.message.replyTo
+                    )?.message.content || [],
+                }
+              : undefined
+          }
+          isEdited={message.message.isEdited}
           key={message.message._id}
           content={message.message.content}
           createdAt={message.message._creationTime}
@@ -29,8 +41,6 @@ export default function Body() {
           type={message.message.type}
           isLastMessage={i === 0}
           messageId={message.message._id}
-          messages={messages}
-          currentUserId={message.message.senderId}
         />
       ))}
     </div>

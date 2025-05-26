@@ -46,5 +46,7 @@ export default defineSchema({
     conversationId: v.id("conversations"),
     type: v.string(),
     content: v.array(v.string()),
+    isEdited: v.boolean(),
+    replyTo: v.optional(v.id("messages")),
   }).index("by_conversationId", ["conversationId"]),
 });
