@@ -1,25 +1,15 @@
 import { ConvexError, v } from "convex/values";
 import { query } from "./_generated/server";
-import { getUserByClerkId } from "./_utils";
+import { getAuthenticatedUser } from "./_utils";
 
 export const get = query({
   args: {
     conversationId: v.id("conversations"),
   },
   async handler(ctx, args) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError("Unauthorized");
-    }
-    const currentUser = await getUserByClerkId({
-      ctx,
-      clerkId: identity.subject,
-    });
+    const currentUser = await getAuthenticatedUser(ctx);
 
-    if (!currentUser) {
-      throw new ConvexError("User not found in requests");
-    }
-// getting conversation details from the conversationId
+    // getting conversation details from the conversationId
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) {
       throw new ConvexError("Conversation not found");
@@ -50,7 +40,7 @@ export const get = query({
         (ms) => ms.memberId !== currentUser._id
       )[0];
       const otherMemberDetails = await ctx.db.get(otherMembership.memberId);
-      
+
       // returning the conversation details with the other member details
       const returnData = {
         ...conversation,
@@ -62,28 +52,23 @@ export const get = query({
       };
 
       return returnData;
+    } else {
+      const otherMembers = await Promise.all(
+        allConversationMemberships
+          .filter((mship) => mship.memberId !== currentUser._id)
+          .map(async (membership) => {
+            const member = await ctx.db.get(membership.memberId);
+            if (!member) {
+              throw new ConvexError("member couldn't be found ");
+            }
+            return {
+              username: member.username,
+            };
+          })
+      );
+      return { ...conversation, otherMembers, otherMember: null };
     }
-
-    // Handle group conversations
-    const membersWithDetails = await Promise.all(
-      allConversationMemberships.map(async (membership) => {
-        const member = await ctx.db.get(membership.memberId);
-        if (!member) {
-          throw new ConvexError("Member not found");
-        }
-        return {
-          ...member,
-          lastSeenMessageId: membership.lastSeenMessage,
-        };
-      })
-    );
-
-    const groupReturnData = {
-      ...conversation,
-      otherMember: null,
-      otherMembers: membersWithDetails,
-    };
-
-    return groupReturnData;
   },
 });
+
+

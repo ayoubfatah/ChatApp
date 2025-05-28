@@ -14,36 +14,39 @@ import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import { toast } from "sonner";
 
-type DeleteFriendDialogProps = {
+type LeaveGroupDialogProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   conversationId: Id<"conversations">;
 };
 
-export default function DeleteFriendDialog({
+export default function LeaveGroupDialog({
   isOpen,
   onOpenChange,
   conversationId,
-}: DeleteFriendDialogProps) {
+}: LeaveGroupDialogProps) {
   const router = useRouter();
-  const { mutate: deleteFriend, isPending } = useMutationState(
-    api.friends.deleteFriend
+  const { mutate: deleteGroup, isPending } = useMutationState(
+    api.group.deleteGroup
   );
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
+
   const handleDelete = async () => {
     try {
-      await deleteFriend({ id: conversationId });
-      toast.success("Friend deleted successfully");
+      await deleteGroup({ id: conversationId });
+      toast.success("You left The Group");
       onOpenChange(false);
       timeoutId.current = setTimeout(() => {
         router.replace("/conversations");
       }, 100);
     } catch (error) {
       toast.error(
-        error instanceof ConvexError ? error.data : "Failed to delete friend"
+        error instanceof ConvexError ? error.data : "Failed to leave the Group"
       );
     } finally {
-      clearTimeout(timeoutId.current);
+      if (timeoutId.current) {
+        clearTimeout(timeoutId.current);
+      }
     }
   };
 
@@ -51,9 +54,9 @@ export default function DeleteFriendDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Friend</DialogTitle>
+          <DialogTitle>Delete Group</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this friend? This action cannot be
+            Are you sure you want to delete this Group? This action cannot be
             undone.
           </DialogDescription>
         </DialogHeader>

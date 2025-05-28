@@ -1,7 +1,80 @@
 import { ConvexError, v } from "convex/values";
-import { mutation } from "./_generated/server";
-import { getUserByClerkId } from "./_utils";
+import { mutation, query } from "./_generated/server";
+import { getAuthenticatedUser } from "./_utils";
 
+export const get = query({
+  args: {},
+
+  async handler(ctx) {
+    // 1. Get the current user's identity from Clerk auth
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Unauthorized");
+    }
+    // 2. Get the current user's details from our database using their Clerk ID
+    const currentUser = await getAuthenticatedUser(ctx);
+
+    if (!currentUser) {
+      throw new ConvexError("User not found in requests");
+    }
+    // 3. get all friendships where current user is User1
+    const friendShip1 = await ctx.db
+      .query("friends")
+      .withIndex("by_user1", (q) => q.eq("user1", currentUser._id))
+      .collect();
+    //4.  get all friendships where current user is User2
+    const friendShip2 = await ctx.db
+      .query("friends")
+      .withIndex("by_user2", (q) => q.eq("user2", currentUser._id))
+      .collect();
+
+    const friendships = [...friendShip1, ...friendShip2];
+    // getting details of each friend
+    return await Promise.all(
+      friendships.map(async (friendship) => {
+        const friend = await ctx.db.get(
+          friendship.user1 === currentUser._id
+            ? friendship.user2
+            : friendship.user1
+        );
+        if (!friend) {
+          throw new ConvexError("friend couldn't be found");
+        }
+        return friend;
+      })
+    );
+  },
+});
+
+export const createGroup = mutation({
+  args: {
+    members: v.array(v.id("users")),
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const currentUser = await getAuthenticatedUser(ctx);
+    const conversationId = await ctx.db.insert("conversations", {
+      isGroup: true,
+      name: args.name,
+    });
+
+    await Promise.all(
+      [...args.members, currentUser._id].map(async (memberId) => {
+        console.log("members", ...args.members, currentUser._id);
+        await ctx.db.insert("conversationMembers", {
+          memberId,
+          conversationId,
+        });
+      })
+    );
+  },
+});
+
+//
+//
+//
+//
+//
 export const deleteFriend = mutation({
   args: {
     id: v.id("conversations"),
@@ -12,10 +85,7 @@ export const deleteFriend = mutation({
       throw new ConvexError("unauthorized");
     }
 
-    const currentUser = await getUserByClerkId({
-      ctx,
-      clerkId: identity.subject,
-    });
+    const currentUser = await getAuthenticatedUser(ctx);
     if (!currentUser) {
       throw new ConvexError("user not found");
     }

@@ -1,6 +1,6 @@
 import { ConvexError } from "convex/values";
 import { query } from "./_generated/server";
-import { getMessagesContent, getUserByClerkId } from "./_utils";
+import { getMessagesContent, getAuthenticatedUser } from "./_utils";
 import { QueryCtx, MutationCtx } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
@@ -8,20 +8,8 @@ export const get = query({
   args: {},
 
   async handler(ctx) {
-    // 1. Get the current user's identity from Clerk auth
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError("Unauthorized");
-    }
-    // 2. Get the current user's details from our database using their Clerk ID
-    const currentUser = await getUserByClerkId({
-      ctx,
-      clerkId: identity.subject,
-    });
+    const currentUser = await getAuthenticatedUser(ctx);
 
-    if (!currentUser) {
-      throw new ConvexError("User not found in requests");
-    }
     // 3. Get all conversation memberships where the current user is a member
     const conversationMemberships = await ctx.db
       .query("conversationMembers")

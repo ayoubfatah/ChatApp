@@ -14,33 +14,34 @@ import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import { toast } from "sonner";
 
-type DeleteFriendDialogProps = {
+type DeleteGroupDialogProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   conversationId: Id<"conversations">;
 };
 
-export default function DeleteFriendDialog({
+export default function DeleteGroupDialog({
   isOpen,
   onOpenChange,
   conversationId,
-}: DeleteFriendDialogProps) {
+}: DeleteGroupDialogProps) {
   const router = useRouter();
-  const { mutate: deleteFriend, isPending } = useMutationState(
-    api.friends.deleteFriend
+  const { mutate: deleteGroup, isPending } = useMutationState(
+    api.group.deleteGroup
   );
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
+
   const handleDelete = async () => {
     try {
-      await deleteFriend({ id: conversationId });
-      toast.success("Friend deleted successfully");
+      await deleteGroup({ id: conversationId });
+      toast.success("Group deleted successfully");
       onOpenChange(false);
       timeoutId.current = setTimeout(() => {
         router.replace("/conversations");
       }, 100);
     } catch (error) {
       toast.error(
-        error instanceof ConvexError ? error.data : "Failed to delete friend"
+        error instanceof ConvexError ? error.data : "Failed to delete the Group"
       );
     } finally {
       clearTimeout(timeoutId.current);
@@ -51,9 +52,9 @@ export default function DeleteFriendDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Friend</DialogTitle>
+          <DialogTitle>Delete Group</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this friend? This action cannot be
+            Are you sure you want to delete this Group? This action cannot be
             undone.
           </DialogDescription>
         </DialogHeader>

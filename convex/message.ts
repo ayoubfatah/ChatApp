@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
-import { mutation } from "./_generated/server";
-import { getUserByClerkId } from "./_utils";
+import { mutation, query } from "./_generated/server";
+import { getAuthenticatedUser } from "./_utils";
 
 export const create = mutation({
   args: {
@@ -17,10 +17,7 @@ export const create = mutation({
 
     console.log("type li kayji ", args.type);
 
-    const currentUser = await getUserByClerkId({
-      ctx,
-      clerkId: identity.subject,
-    });
+    const currentUser = await getAuthenticatedUser(ctx);
 
     if (!currentUser) {
       throw new ConvexError("User not found in requests");
@@ -71,10 +68,7 @@ export const edit = mutation({
       throw new ConvexError("Unauthorized");
     }
 
-    const currentUser = await getUserByClerkId({
-      ctx,
-      clerkId: identity.subject,
-    });
+    const currentUser = await getAuthenticatedUser(ctx);
 
     if (!currentUser) {
       throw new ConvexError("User not found");
@@ -117,5 +111,71 @@ export const edit = mutation({
     });
 
     return updatedMessage;
+  },
+});
+
+export const remove = mutation({
+  args: {
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Unauthorized");
+    }
+
+    const currentUser = await getAuthenticatedUser(ctx);
+
+    if (!currentUser) {
+      throw new ConvexError("User not found");
+    }
+
+    // Get the message to delete
+    const message = await ctx.db.get(args.messageId);
+    if (!message) {
+      throw new ConvexError("Message not found");
+    }
+
+    // Check if the current user is the sender
+    if (message.senderId !== currentUser._id) {
+      throw new ConvexError("You can only delete your own messages");
+    }
+
+    // Check if user is a member of the conversation
+    const memberShip = await ctx.db
+      .query("conversationMembers")
+      .withIndex("by_memberId_conversationId", (q) =>
+        q
+          .eq("memberId", currentUser._id)
+          .eq("conversationId", message.conversationId)
+      )
+      .first();
+
+    if (!memberShip) {
+      throw new ConvexError("You aren't a member of this conversation");
+    }
+
+    // Delete the message
+    await ctx.db.delete(args.messageId);
+
+    // If this was the last message in the conversation, update the conversation
+    const conversation = await ctx.db.get(message.conversationId);
+    if (conversation?.lastMessageId === args.messageId) {
+      // Find the new last message
+      const lastMessage = await ctx.db
+        .query("messages")
+        .withIndex("by_conversationId", (q) =>
+          q.eq("conversationId", message.conversationId)
+        )
+        .order("desc")
+        .first();
+
+      // Update conversation with new last message or null if no messages left
+      await ctx.db.patch(message.conversationId, {
+        lastMessageId: lastMessage?._id || null,
+      });
+    }
+
+    return args.messageId;
   },
 });

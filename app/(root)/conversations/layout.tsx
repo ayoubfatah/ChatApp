@@ -5,6 +5,8 @@ import { useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { ReactNode } from "react";
 import DMconversationItem from "./_components/DMconversationItem";
+import { CreateGroupDialog } from "./_components/CreateGroupDialog";
+import GroupConversationItem from "./_components/GroupConversations";
 
 export default function ConversationsLayout({
   children,
@@ -14,7 +16,7 @@ export default function ConversationsLayout({
   const conversations = useQuery(api.conversations.get);
   return (
     <>
-      <ItemList title="Conversations">
+      <ItemList title="Conversations" action={<CreateGroupDialog />}>
         {conversations ? (
           conversations.length === 0 ? (
             <p className="h-full w-full flex justify-center items-center">
@@ -22,7 +24,18 @@ export default function ConversationsLayout({
             </p>
           ) : (
             conversations.map((conversation) => {
-              return conversation.conversation.isGroup ? null : (
+              return conversation.conversation.isGroup ? (
+                <GroupConversationItem
+                  key={conversation?.conversation?._id}
+                  id={conversation?.conversation?._id}
+                  name={conversation?.conversation.name}
+                  lastMessageContent={
+                    conversation?.lastMessage?.content ||
+                    "star a new conversation"
+                  }
+                  lastMessageSender={conversation?.lastMessage?.sender || ""}
+                />
+              ) : (
                 <DMconversationItem
                   key={conversation?.conversation?._id}
                   id={conversation?.conversation?._id}

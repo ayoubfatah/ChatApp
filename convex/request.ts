@@ -1,28 +1,16 @@
 import { ConvexError, v } from "convex/values";
 import { mutation } from "./_generated/server";
-import { getUserByClerkId } from "./_utils";
+import { getAuthenticatedUser } from "./_utils";
 
 export const create = mutation({
   args: {
     email: v.string(),
   },
   handler: async (ctx, args) => {
-    // User is authenticated
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError("unauthorized");
-    }
-    if (identity.email === args.email) {
-      throw new ConvexError("Can't send a  request to yourself");
-    }
-    // getting current user
-    const currentUser = await getUserByClerkId({
-      ctx,
-      clerkId: identity.subject,
-    });
-    // checking if currentUser exists
-    if (!currentUser) {
-      throw new ConvexError("user not found");
+    const currentUser = await getAuthenticatedUser(ctx);
+
+    if (currentUser.email === args.email) {
+      throw new ConvexError("Can't send a request to yourself");
     }
     // getting the receiver
     const receiver = await ctx.db
@@ -87,20 +75,8 @@ export const deny = mutation({
     id: v.id("requests"),
   },
   handler: async (ctx, args) => {
-    // User is authenticated
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError("unauthorized");
-    }
-    // getting current user
-    const currentUser = await getUserByClerkId({
-      ctx,
-      clerkId: identity.subject,
-    });
-    // checking if currentUser exists
-    if (!currentUser) {
-      throw new ConvexError("user not found");
-    }
+    const currentUser = await getAuthenticatedUser(ctx);
+
     // getting the request
     const request = await ctx.db.get(args.id);
     // checking if the request exists and the receiver is the current user
@@ -116,22 +92,9 @@ export const accept = mutation({
   args: {
     id: v.id("requests"),
   },
-  // User is authenticated
   handler: async (ctx, args) => {
-    // getting current user
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError("unauthorized");
-    }
-    // getting current user
-    const currentUser = await getUserByClerkId({
-      ctx,
-      clerkId: identity.subject,
-    });
-    // checking if currentUser exists
-    if (!currentUser) {
-      throw new ConvexError("user not found");
-    }
+    const currentUser = await getAuthenticatedUser(ctx);
+
     // getting the request
     const request = await ctx.db.get(args.id);
     // checking if the request exists and the receiver is the current user
@@ -169,18 +132,8 @@ export const deleteSentRequest = mutation({
     id: v.id("requests"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError("unauthorized");
-    }
+    await getAuthenticatedUser(ctx);
 
-    const currentUser = await getUserByClerkId({
-      ctx,
-      clerkId: identity.subject,
-    });
-    if (!currentUser) {
-      throw new ConvexError("user not found");
-    }
     const request = await ctx.db.get(args.id);
 
     await ctx.db.delete(request._id);

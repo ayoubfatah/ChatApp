@@ -160,6 +160,7 @@ export default function ChatInput() {
                 <FormItem className="h-full w-full">
                   <FormControl>
                     <TextareaAutosize
+                      autoFocus
                       ref={textareaRef}
                       onKeyDown={async (e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
@@ -169,7 +170,7 @@ export default function ChatInput() {
                       }}
                       rows={1}
                       maxRows={3}
-                      {...field}
+                      {...field}    
                       onChange={handleInputChange}
                       onClick={handleInputChange}
                       placeholder={

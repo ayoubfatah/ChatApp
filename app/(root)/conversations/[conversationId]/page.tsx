@@ -41,7 +41,9 @@ export default function ConversationPage({
             : conversation.otherMember.imgUrl || ""
         }
         name={
-          conversation.isGroup ? null : conversation.otherMember.username || ""
+          conversation.isGroup
+            ? conversation.name
+            : conversation.otherMember.username || ""
         }
         conversationId={conversationId}
       />
