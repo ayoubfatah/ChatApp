@@ -19,7 +19,7 @@ export default function MobileNav() {
   return (
     <Card className="fixed bottom-4 w-[calc(100vw-32px)] flex items-center h-16 p-2 lg:hidden">
       <nav className="w-full">
-        <ul className="flex justify-evenly items-center ">
+        <ul className="flex justify-center gap-7 items-center ">
           {paths.map((path, id) => {
             return (
               <li key={id} className="relative">
@@ -33,7 +33,7 @@ export default function MobileNav() {
                       <Link href={path.href}>{path.icon}</Link>
                     </Button>
                     {path.count ? (
-                      <Badge className="absolute  rounded-full -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0">
+                      <Badge className="absolute rounded-full -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0">
                         {path.count}
                       </Badge>
                     ) : null}

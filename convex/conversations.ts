@@ -28,7 +28,7 @@ export const get = query({
     );
     // 5. For each conversation, get additional details
     return Promise.all(
-      conversations.map(async (conversation) => {
+      conversations.map(async (conversation, index) => {
         // 5a. Get all members of this conversation
         const allConversationMemberships = await ctx.db
           .query("conversationMembers")
@@ -41,10 +41,32 @@ export const get = query({
           ctx,
           id: conversation.lastMessageId,
         });
+
+        const lastSeenMessage = conversationMemberships[index].lastSeenMessage
+          ? await ctx.db.get(conversationMemberships[index].lastSeenMessage!)
+          : null;
+
+        const lastSeenMessageTime = lastSeenMessage
+          ? lastSeenMessage._creationTime
+          : -1;
+
+        const unSeenMessages = await ctx.db
+          .query("messages")
+          .withIndex("by_conversationId", (q) =>
+            q.eq("conversationId", conversation._id)
+          )
+          .filter((q) => q.gt(q.field("_creationTime"), lastSeenMessageTime))
+          .filter((q) => q.neq(q.field("senderId"), currentUser._id))
+          .collect();
+
         // 5b. Handle group conversations differently from direct messages
         if (conversation.isGroup) {
           // For group chats, just return the conversation
-          return { conversation, lastMessage };
+          return {
+            conversation,
+            lastMessage,
+            unSeenCount: unSeenMessages.length,
+          };
         } else {
           // For direct messages, find the other person in the conversation
           const otherMembership = allConversationMemberships.filter(
@@ -56,6 +78,7 @@ export const get = query({
             conversation,
             otherMember, // Include the other user's details (username, imgUrl, etc.)
             lastMessage,
+            unSeenCount: unSeenMessages.length,
           };
         }
       })

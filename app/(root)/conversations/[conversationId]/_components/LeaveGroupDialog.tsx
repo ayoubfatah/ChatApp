@@ -27,7 +27,7 @@ export default function LeaveGroupDialog({
 }: LeaveGroupDialogProps) {
   const router = useRouter();
   const { mutate: deleteGroup, isPending } = useMutationState(
-    api.group.deleteGroup
+    api.group.leaveGroup
   );
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
 
@@ -54,9 +54,9 @@ export default function LeaveGroupDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Group</DialogTitle>
+          <DialogTitle>Leave Group</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this Group? This action cannot be
+            Are you sure you want to Leave this Group? This action cannot be
             undone.
           </DialogDescription>
         </DialogHeader>
@@ -73,7 +73,7 @@ export default function LeaveGroupDialog({
             onClick={handleDelete}
             disabled={isPending}
           >
-            {isPending ? "Deleting..." : "Delete"}
+            {isPending ? "Leaving..." : "Leave"}
           </Button>
         </div>
       </DialogContent>

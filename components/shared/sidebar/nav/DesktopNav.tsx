@@ -14,7 +14,7 @@ export default function DesktopNav() {
   const { paths } = useNavigation();
 
   return (
-    <Card className="hidden  lg:flex lg:flex-col lg:justify-between lg:items-center lg:h-full lg:w-16 lg:px-2 lg:py-4">
+    <Card className="hidden lg:flex lg:flex-col lg:justify-between lg:items-center lg:h-full lg:w-16 lg:px-2 lg:py-4">
       <nav>
         <ul className="flex flex-col items-center gap-4">
           {paths.map((path, id) => {
@@ -31,7 +31,7 @@ export default function DesktopNav() {
                       <Link href={path.href}>{path.icon}</Link>
                     </Button>
                     {path.count ? (
-                      <Badge className="absolute  rounded-full -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0">
+                      <Badge className="absolute rounded-full -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0">
                         {path.count}
                       </Badge>
                     ) : null}

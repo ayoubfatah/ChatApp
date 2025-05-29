@@ -27,6 +27,9 @@ type Message = {
   messageId: string;
   isEdited: boolean;
   replyTo?: { messageId: string; content: string[] };
+  seen?: React.ReactNode;
+  isGroup: boolean;
+  isSystemMessage?: boolean;
 };
 
 export default function Message({
@@ -39,8 +42,11 @@ export default function Message({
   type,
   isLastMessage,
   messageId,
+  seen,
+  isGroup,
   isEdited,
   replyTo,
+  isSystemMessage,
 }: Message) {
   const { setEditMessage, setIsEditingMessage, setReplyTo, setIsReplying } =
     useMessageStore();
@@ -79,35 +85,50 @@ export default function Message({
       if (originalMessage) {
         originalMessage.scrollIntoView({ behavior: "smooth", block: "center" });
         // Add a highlight effect
-        originalMessage.classList.add("bg-muted/50");
-        setTimeout(() => {
-          originalMessage.classList.remove("bg-muted/50");
-        }, 2000);
+        const messageBox = originalMessage.querySelector(".message-box");
+        if (messageBox) {
+          messageBox.classList.add("message-highlight");
+          const timeoutId = setTimeout(() => {
+            messageBox.classList.remove("message-highlight");
+          }, 1000);
+          return () => clearTimeout(timeoutId);
+        }
       }
     }
   }, [replyTo?.messageId]);
 
+  if (isSystemMessage) {
+    return (
+      <div className="flex justify-center my-2">
+        <div className="bg-muted/50 px-4 py-1 rounded-full text-xs text-muted-foreground">
+          {content[0]}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <div
-          id={`message-${messageId}`}
-          className={cn(
-            "flex w-fit max-w-[80%] gap-2 cursor-context-menu transition-colors duration-200",
-            fromCurrentUser && "self-end"
-          )}
-        >
-          {!fromCurrentUser && (
-            <div className="flex flex-col gap-1 translate-y-[-15px]">
-              {lastByUser && (
-                <Avatar>
-                  <AvatarImage src={senderImage} alt={senderName} />
-                  <AvatarFallback>{senderName[0]}</AvatarFallback>
-                </Avatar>
-              )}
-              {!lastByUser && <div className="size-8" />}
-            </div>
-          )}
+      <p className=" bg-[#e1e4e6]"></p>{" "}
+      <div
+        id={`message-${messageId}`}
+        className={cn(
+          "flex w-fit max-w-[80%] gap-2 cursor-context-menu transition-colors duration-200",
+          fromCurrentUser && "self-end"
+        )}
+      >
+        {!fromCurrentUser && (
+          <div className="flex flex-col gap-1 translate-y-[-15px]">
+            {lastByUser && (
+              <Avatar>
+                <AvatarImage src={senderImage} alt={senderName} />
+                <AvatarFallback>{senderName[0]}</AvatarFallback>
+              </Avatar>
+            )}
+            {!lastByUser && <div className="size-8" />}
+          </div>
+        )}
+        <div className="flex flex-col gap-1 ">
           <div
             className={cn(
               "flex flex-col",
@@ -116,42 +137,50 @@ export default function Message({
           >
             {replyTo && replyTo.content && replyTo.content.length > 0 && (
               <div
-                onClick={handleReplyClick}
+                onClick={() => {
+                  handleReplyClick();
+                }}
                 className="text-[10px] text-muted-foreground mb-1 cursor-pointer hover:text-primary transition-colors"
               >
                 Replying to: {replyTo.content[0]}
               </div>
-            )}
-            <div
-              className={cn(
-                "rounded-lg px-4 py-2",
-                fromCurrentUser
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted",
-                type === "text" &&
-                  "text-wrap break-words whitespace-pre-wrap break-all",
-                lastByUser && !fromCurrentUser && "rounded-tl-none",
-                isLastMessage && fromCurrentUser && "rounded-br-none"
-              )}
+            )}{" "}
+            <DropdownMenuTrigger
+              className="transition-colors duration-300"
+              asChild
             >
-              {content.map((text, i) => (
-                <div key={i}>
-                  <p className="">{text}</p>
-                </div>
-              ))}
-              <p
+              <div
                 className={cn(
-                  "text-[9px]",
+                  "message-box transition-colors duration-300 rounded-lg px-4 py-2",
                   fromCurrentUser
-                    ? "text-primary-foreground"
-                    : "text-muted-foreground"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted",
+                  type === "text" &&
+                    "text-wrap break-words whitespace-pre-wrap break-all",
+                  lastByUser && !fromCurrentUser && "rounded-tl-none",
+                  isLastMessage && fromCurrentUser && "rounded-br-none"
                 )}
               >
-                {formatDistanceToNow(createdAt, {
-                  addSuffix: true,
-                })}
-              </p>
-            </div>
+                {content.map((text, i) => (
+                  <div key={i}>
+                    <p className="">{text}</p>
+                  </div>
+                ))}
+                <p
+                  className={cn(
+                    "text-[9px] flex items-center gap-2",
+                    fromCurrentUser
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {formatDistanceToNow(createdAt, {
+                    addSuffix: true,
+                  })}
+                  {!isGroup && seen}
+                </p>
+              </div>
+            </DropdownMenuTrigger>
             {!fromCurrentUser && isEdited && (
               <span className="text-[9px] text-muted-foreground ml-1">
                 (edited)
@@ -159,7 +188,7 @@ export default function Message({
             )}
           </div>
         </div>
-      </DropdownMenuTrigger>
+      </div>
       <DropdownMenuContent
         align={fromCurrentUser ? "start" : "end"}
         className="w-40"

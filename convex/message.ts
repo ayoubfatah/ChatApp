@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation } from "./_generated/server";
 import { getAuthenticatedUser } from "./_utils";
 
 export const create = mutation({
@@ -14,8 +14,6 @@ export const create = mutation({
     if (!identity) {
       throw new ConvexError("Unauthorized");
     }
-
-    console.log("type li kayji ", args.type);
 
     const currentUser = await getAuthenticatedUser(ctx);
 

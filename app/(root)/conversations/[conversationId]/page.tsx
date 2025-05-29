@@ -47,7 +47,18 @@ export default function ConversationPage({
         }
         conversationId={conversationId}
       />
-      <Body></Body>
+      <Body
+        members={
+          conversation.isGroup
+            ? conversation.otherMembers
+              ? conversation.otherMembers
+              : []
+            : conversation.otherMember
+              ? [conversation.otherMember]
+              : []
+        }
+        isGroup={conversation.isGroup}
+      ></Body>
       <ChatInput />
     </ConversationContainer>
   );

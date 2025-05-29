@@ -1,19 +1,21 @@
 "use client";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import useConversation from "@/hooks/useConversation";
 import useMutationState from "@/hooks/useMutationState";
+import { useMessageStore } from "@/store/useMessageStore";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
+import { SendHorizonal, X } from "lucide-react";
 import React, { useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
+import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "sonner";
 import { z } from "zod";
-import TextareaAutosize from "react-textarea-autosize";
-import { Button } from "@/components/ui/button";
-import { SendHorizonal, X } from "lucide-react";
-import { useMessageStore } from "@/store/useMessageStore";
 
 const chatMessageSchema = z.object({
   content: z.string().min(1, { message: "this field can't be empty" }),
@@ -41,6 +43,9 @@ export default function ChatInput() {
 
   const { mutate: editMessageMutation, isPending: isEditing } =
     useMutationState(api.message.edit);
+
+  const setTypingStatus = useMutation(api.conversation.setTypingStatus);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const form = useForm<z.infer<typeof chatMessageSchema>>({
     resolver: zodResolver(chatMessageSchema),
@@ -96,12 +101,23 @@ export default function ChatInput() {
     const { value, selectionStart } = target;
     if (selectionStart !== null) {
       form.setValue("content", value);
+      handleTyping();
     }
   }
 
   async function handleSubmit(values: z.infer<typeof chatMessageSchema>) {
     console.log("Submit called with values:", values);
     try {
+      // Clear typing status when sending message
+      setTypingStatus({
+        conversationId: conversationId as Id<"conversations">,
+        isTyping: false,
+      });
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+
       if (isEditingMessage && editMessage) {
         await editMessageMutation({
           messageId: editMessage,
@@ -127,6 +143,50 @@ export default function ChatInput() {
       );
     }
   }
+
+  const handleTyping = () => {
+    setTypingStatus({
+      conversationId: conversationId as Id<"conversations">,
+      isTyping: true,
+    });
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set new timeout to stop typing status
+    typingTimeoutRef.current = setTimeout(() => {
+      setTypingStatus({
+        conversationId: conversationId as Id<"conversations">,
+        isTyping: false,
+      });
+      typingTimeoutRef.current = null;
+    }, 1000); // Reduced to 1 second for better UX
+  };
+
+  // Clear typing status when component unmounts or when input is empty
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      if (!value.content) {
+        setTypingStatus({
+          conversationId: conversationId as Id<"conversations">,
+          isTyping: false,
+        });
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = null;
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [conversationId, form, setTypingStatus]);
 
   return (
     <Card className="w-full p-2 rounded-lg relative">
@@ -170,7 +230,7 @@ export default function ChatInput() {
                       }}
                       rows={1}
                       maxRows={3}
-                      {...field}    
+                      {...field}
                       onChange={handleInputChange}
                       onClick={handleInputChange}
                       placeholder={

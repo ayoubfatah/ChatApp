@@ -48,5 +48,24 @@ export default defineSchema({
     content: v.array(v.string()),
     isEdited: v.boolean(),
     replyTo: v.optional(v.id("messages")),
+    isSystemMessage: v.optional(v.boolean()),
   }).index("by_conversationId", ["conversationId"]),
+
+  groupLeaves: defineTable({
+    userId: v.id("users"),
+    conversationId: v.id("conversations"),
+    username: v.string(),
+    leftAt: v.number(),
+  })
+    .index("by_conversationId", ["conversationId"])
+    .index("by_userId", ["userId"]),
+
+  typingStatus: defineTable({
+    userId: v.id("users"),
+    conversationId: v.id("conversations"),
+    isTyping: v.boolean(),
+    lastTypingAt: v.number(),
+  })
+    .index("by_conversationId", ["conversationId"])
+    .index("by_userId", ["userId"]),
 });

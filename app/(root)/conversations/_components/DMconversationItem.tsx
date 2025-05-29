@@ -26,8 +26,23 @@ export default function DMconversationItem({
   lastMessageSender,
 }: DMconversationItemProps) {
   const { userId } = useAuth();
-  const user = useQuery(api.users.get, { clerkId: userId });
+  const user = useQuery(
+    api.users.get,
+    userId
+      ? {
+          clerkId: userId,
+        }
+      : undefined
+  );
   const currentUserUsername = user?.username;
+
+  // Get typing status for this conversation
+  const typingUsers = useQuery(api.conversation.getTypingStatus, {
+    conversationId: id,
+  });
+
+  // Check if the other user is typing
+  const isOtherUserTyping = typingUsers && typingUsers.length > 0;
 
   return (
     <Link href={`/conversations/${id}`} className="w-full">
@@ -44,7 +59,11 @@ export default function DMconversationItem({
           </div>
           <div className="flex flex-col truncate">
             <h4 className="truncate">{username}</h4>
-            {lastMessageSender && lastMessageContent ? (
+            {isOtherUserTyping ? (
+              <p className="text-sm text-muted-foreground italic">
+                {username} is typing...
+              </p>
+            ) : lastMessageSender && lastMessageContent ? (
               <span className="text-sm text-muted-foreground flex truncate overflow-ellipsis">
                 <p className="font-semibold">
                   {lastMessageSender === currentUserUsername ? "You :" : ""}
