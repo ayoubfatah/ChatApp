@@ -28,6 +28,7 @@ export default function ChatInput() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const emojiPickerRef = useRef<any>(null);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState<number>(0);
   const { theme } = useTheme();
 
   const { conversationId } = useConversation();
@@ -59,6 +60,7 @@ export default function ChatInput() {
     },
   });
 
+  const content = form.watch("content", "");
   useEffect(() => {
     if (isEditingMessage && editMessage) {
       textareaRef.current?.focus();
@@ -103,10 +105,20 @@ export default function ChatInput() {
     const { value, selectionStart } = target;
     if (selectionStart !== null) {
       form.setValue("content", value);
+      setCursorPosition(selectionStart);
       handleTyping();
     }
   }
 
+  const insertEmoji = (emoji: string) => {
+    const newText = [
+      content.substring(0, cursorPosition),
+      emoji,
+      content.substring(cursorPosition),
+    ].join("");
+    form.setValue("content", newText);
+    setCursorPosition(cursorPosition + emoji.length);
+  };
   async function handleSubmit(values: z.infer<typeof chatMessageSchema>) {
     try {
       // Clear typing status when sending message
@@ -168,26 +180,19 @@ export default function ChatInput() {
 
   // Clear typing status when component unmounts or when input is empty
   useEffect(() => {
-    const subscription = form.watch((value) => {
-      if (!value.content) {
-        setTypingStatus({
-          conversationId: conversationId as Id<"conversations">,
-          isTyping: false,
-        });
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current);
-          typingTimeoutRef.current = null;
-        }
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(e.target)
+      ) {
+        setEmojiPickerOpen(false);
       }
     };
-  }, [conversationId, form, setTypingStatus]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   //
   //
@@ -232,11 +237,12 @@ export default function ChatInput() {
           </Button>
         </div>
       )}
-      <div className="absolute bottom-16" ref={emojiPickerRef}>
+      <div className="absolute bottom-16 bg-amber-400" ref={emojiPickerRef}>
         <EmojiPicker
           open={emojiPickerOpen}
           theme={theme as Theme}
-          onEmojiClick={() => {
+          onEmojiClick={(emojiDetails) => {
+            insertEmoji(emojiDetails.emoji);
             setEmojiPickerOpen(false);
           }}
           lazyLoadEmojis
