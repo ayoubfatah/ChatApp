@@ -16,6 +16,7 @@ type DMconversationItemProps = {
   username: string;
   lastMessageSender?: string;
   lastMessageContent?: string;
+  unSeenCount?: number;
 };
 
 export default function DMconversationItem({
@@ -24,6 +25,7 @@ export default function DMconversationItem({
   username,
   lastMessageContent,
   lastMessageSender,
+  unSeenCount = 0,
 }: DMconversationItemProps) {
   const { userId } = useAuth();
   const user = useQuery(
@@ -79,6 +81,11 @@ export default function DMconversationItem({
             )}
           </div>
         </div>
+        {unSeenCount > 0 && (
+          <div className="ml-auto bg-primary text-primary-foreground rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 text-xs">
+            {unSeenCount}
+          </div>
+        )}
       </Card>
     </Link>
   );

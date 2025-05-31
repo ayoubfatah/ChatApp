@@ -103,5 +103,9 @@ const getLastMessageDetails = async ({
     message.content as unknown as string
   );
 
-  return { content, sender: sender.username };
+  return {
+    content,
+    sender: sender.username,
+    _creationTime: message._creationTime,
+  };
 };

@@ -15,6 +15,7 @@ type GroupConversationItemProps = {
   name: string;
   lastMessageSender?: string;
   lastMessageContent?: string;
+  unSeenCount?: number;
 };
 
 export default function GroupConversationItem({
@@ -22,6 +23,7 @@ export default function GroupConversationItem({
   name,
   lastMessageContent,
   lastMessageSender,
+  unSeenCount = 0,
 }: GroupConversationItemProps) {
   const { userId } = useAuth();
   const user = useQuery(api.users.get, { clerkId: userId });
@@ -57,6 +59,11 @@ export default function GroupConversationItem({
             )}
           </div>
         </div>
+        {unSeenCount > 0 && (
+          <div className="ml-auto bg-primary text-primary-foreground rounded-full min-w-[20px] h-5 flex items-center justify-center px-1 text-xs">
+            {unSeenCount}
+          </div>
+        )}
       </Card>
     </Link>
   );

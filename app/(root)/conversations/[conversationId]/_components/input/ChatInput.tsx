@@ -11,11 +11,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
 import { SendHorizonal, X } from "lucide-react";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "sonner";
 import { z } from "zod";
+import { MessageActionsPopover } from "./MessageActionsPopover";
+import { useTheme } from "next-themes";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 
 const chatMessageSchema = z.object({
   content: z.string().min(1, { message: "this field can't be empty" }),
@@ -23,6 +26,10 @@ const chatMessageSchema = z.object({
 
 export default function ChatInput() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const emojiPickerRef = useRef<any>(null);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const { theme } = useTheme();
+
   const { conversationId } = useConversation();
   const {
     editMessage,
@@ -34,8 +41,6 @@ export default function ChatInput() {
     setReplyTo,
     setIsReplying,
   } = useMessageStore();
-
-  console.log("ChatInput - Current state:", { editMessage, isEditingMessage });
 
   const { mutate: createMessage, isPending: isCreating } = useMutationState(
     api.message.create
@@ -55,15 +60,12 @@ export default function ChatInput() {
   });
 
   useEffect(() => {
-    console.log("Edit mode changed:", { isEditingMessage, editMessage });
     if (isEditingMessage && editMessage) {
-      console.log("Focusing textarea for editing");
       textareaRef.current?.focus();
     }
   }, [isEditingMessage, editMessage]);
 
   const handleCancelEdit = useCallback(() => {
-    console.log("Canceling edit mode");
     setEditMessage(null);
     setIsEditingMessage(false);
     form.reset();
@@ -106,7 +108,6 @@ export default function ChatInput() {
   }
 
   async function handleSubmit(values: z.infer<typeof chatMessageSchema>) {
-    console.log("Submit called with values:", values);
     try {
       // Clear typing status when sending message
       setTypingStatus({
@@ -188,6 +189,30 @@ export default function ChatInput() {
     };
   }, [conversationId, form, setTypingStatus]);
 
+  //
+  //
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      if (!value.content) {
+        setTypingStatus({
+          conversationId: conversationId as Id<"conversations">,
+          isTyping: false,
+        });
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = null;
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [conversationId, form, setTypingStatus]);
+
   return (
     <Card className="w-full p-2 rounded-lg relative">
       {(isEditingMessage || isReplying) && (
@@ -207,7 +232,18 @@ export default function ChatInput() {
           </Button>
         </div>
       )}
+      <div className="absolute bottom-16" ref={emojiPickerRef}>
+        <EmojiPicker
+          open={emojiPickerOpen}
+          theme={theme as Theme}
+          onEmojiClick={() => {
+            setEmojiPickerOpen(false);
+          }}
+          lazyLoadEmojis
+        />
+      </div>
       <div className="flex gap-2 items-end">
+        <MessageActionsPopover setEmojiPickerOpen={setEmojiPickerOpen} />
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
