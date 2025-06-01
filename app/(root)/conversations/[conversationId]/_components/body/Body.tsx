@@ -1,17 +1,18 @@
 "use client";
+import { Tooltip } from "@/components/ui/tooltip";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import useConversation from "@/hooks/useConversation";
-import { useMutation, useQuery } from "convex/react";
-import { useEffect } from "react";
-import Message from "./Message";
-import { Tooltip } from "@/components/ui/tooltip";
 import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
+import { useMutation, useQuery } from "convex/react";
 import { CheckCheck } from "lucide-react";
+import { Dispatch, SetStateAction, useEffect } from "react";
+import CallRoom from "./CallRoom";
+import Message from "./Message";
 import TypingIndicator from "./TypingIndicator";
 
 type BodyProps = {
@@ -21,11 +22,17 @@ type BodyProps = {
     [key: string]: any;
   }[];
   isGroup?: boolean;
+  setCallType: Dispatch<SetStateAction<"audio" | "video" | null>>;
+  callType: "audio" | "video" | null;
 };
 
-export default function Body({ members, isGroup }: BodyProps) {
+export default function Body({
+  callType,
+  setCallType,
+  members,
+  isGroup,
+}: BodyProps) {
   const { conversationId } = useConversation();
-
   const messages = useQuery(api.messages.get, {
     conversationId: conversationId as Id<"conversations">,
   });
@@ -100,43 +107,48 @@ export default function Body({ members, isGroup }: BodyProps) {
       {typingUsers && typingUsers.length > 0 && (
         <TypingIndicator users={typingUsers} />
       )}
-      {messages?.map((message, i) => {
-        const seenMessage = message.isCurrentUser
-          ? getSeenMessage(message.message._id)
-          : undefined;
-        return (
-          <Message
-            isGroup={isGroup}
-            replyTo={
-              message.message.replyTo
-                ? {
-                    messageId: message.message.replyTo,
-                    content:
-                      messages.find(
-                        (m) => m.message._id === message.message.replyTo
-                      )?.message.content || [],
-                  }
-                : undefined
-            }
-            seen={seenMessage}
-            isEdited={message.message.isEdited}
-            key={message.message._id}
-            content={message.message.content}
-            createdAt={message.message._creationTime}
-            fromCurrentUser={message.isCurrentUser}
-            lastByUser={
-              i === messages.length - 1 ||
-              messages[i + 1]?.message.senderId !== messages[i].message.senderId
-            }
-            senderImage={message.senderImage}
-            senderName={message.senderName || ""}
-            type={message.message.type}
-            isLastMessage={i === 0}
-            messageId={message.message._id}
-            isSystemMessage={message.message.isSystemMessage}
-          />
-        );
-      })}
+      {!callType ? (
+        messages?.map((message, i) => {
+          const seenMessage = message.isCurrentUser
+            ? getSeenMessage(message.message._id)
+            : undefined;
+          return (
+            <Message
+              isGroup={isGroup}
+              replyTo={
+                message.message.replyTo
+                  ? {
+                      messageId: message.message.replyTo,
+                      content:
+                        messages.find(
+                          (m) => m.message._id === message.message.replyTo
+                        )?.message.content || [],
+                    }
+                  : undefined
+              }
+              seen={seenMessage}
+              isEdited={message.message.isEdited}
+              key={message.message._id}
+              content={message.message.content}
+              createdAt={message.message._creationTime}
+              fromCurrentUser={message.isCurrentUser}
+              lastByUser={
+                i === messages.length - 1 ||
+                messages[i + 1]?.message.senderId !==
+                  messages[i].message.senderId
+              }
+              senderImage={message.senderImage}
+              senderName={message.senderName || ""}
+              type={message.message.type}
+              isLastMessage={i === 0}
+              messageId={message.message._id}
+              isSystemMessage={message.message.isSystemMessage}
+            />
+          );
+        })
+      ) : (
+        <CallRoom />
+      )}
     </div>
   );
 }

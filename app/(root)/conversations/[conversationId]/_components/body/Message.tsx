@@ -8,13 +8,15 @@ import {
 import { cn } from "@/lib/utils";
 import { useMessageStore } from "@/store/useMessageStore";
 import { formatDistanceToNow } from "date-fns";
-import { Edit, Reply, Copy, Trash2 } from "lucide-react";
+import { Edit, Reply, Copy, Trash2, EllipsisVertical } from "lucide-react";
 import { copyToClipboard } from "@/utils/utils";
 import { api } from "@/convex/_generated/api";
 import useMutationState from "@/hooks/useMutationState";
 import { toast } from "sonner";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { ImagePreview } from "./ImagePreview";
+import { Button } from "@/components/ui/button";
+import { FilePreview } from "./FilePreview";
 
 type Message = {
   fromCurrentUser: boolean;
@@ -49,6 +51,7 @@ export default function Message({
   replyTo,
   isSystemMessage,
 }: Message) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { setEditMessage, setIsEditingMessage, setReplyTo, setIsReplying } =
     useMessageStore();
 
@@ -109,12 +112,11 @@ export default function Message({
   }
 
   return (
-    <DropdownMenu>
-      <p className=" bg-[#e1e4e6]"></p>{" "}
+    <DropdownMenu onOpenChange={setIsMenuOpen}>
       <div
         id={`message-${messageId}`}
         className={cn(
-          "flex w-fit max-w-[80%] gap-2 cursor-context-menu transition-colors duration-200",
+          "flex w-fit max-w-[80%] gap-2 group relative transition-colors duration-200",
           fromCurrentUser && "self-end"
         )}
       >
@@ -129,7 +131,7 @@ export default function Message({
             {!lastByUser && <div className="size-8" />}
           </div>
         )}
-        <div className="flex flex-col gap-1 ">
+        <div className="flex flex-col gap-1">
           <div
             className={cn(
               "flex flex-col",
@@ -143,14 +145,30 @@ export default function Message({
                 }}
                 className="text-[10px] text-muted-foreground mb-1 cursor-pointer hover:text-primary transition-colors"
               >
-                Replying to: {replyTo.content[0]}
+                Replying to:{" "}
+                {replyTo.content[0].startsWith("http")
+                  ? "attachment"
+                  : replyTo.content[0]}
               </div>
-            )}{" "}
-            <DropdownMenuTrigger
-              className="transition-colors duration-300"
-              asChild
-            >
-              <div className="flex flex-col">
+            )}
+            <div className="flex flex-col relative">
+              <div className={cn("flex items-center gap-2")}>
+                {fromCurrentUser && (
+                  <DropdownMenuTrigger>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className={cn(
+                        "border-none !bg-transparent p-1 transition-opacity duration-200",
+                        isMenuOpen
+                          ? "opacity-100"
+                          : "opacity-0 group-hover:opacity-100"
+                      )}
+                    >
+                      <EllipsisVertical />
+                    </Button>
+                  </DropdownMenuTrigger>
+                )}
                 {type === "text" && (
                   <div
                     className={cn(
@@ -206,8 +224,44 @@ export default function Message({
                     </div>
                   </div>
                 )}
+                {type === "file" && (
+                  <div className="message-box">
+                    <FilePreview url={content[0]} />
+                    <div className="flex items-center justify-between mt-2">
+                      <p
+                        className={cn(
+                          "text-[9px] flex items-center gap-2",
+                          fromCurrentUser
+                            ? "text-primary-foreground"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        {formatDistanceToNow(createdAt, {
+                          addSuffix: true,
+                        })}
+                        {!isGroup && seen}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {!fromCurrentUser && (
+                  <DropdownMenuTrigger>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className={cn(
+                        "border-none !bg-transparent p-1 transition-opacity duration-200",
+                        isMenuOpen
+                          ? "opacity-100"
+                          : "opacity-0 group-hover:opacity-100"
+                      )}
+                    >
+                      <EllipsisVertical />
+                    </Button>
+                  </DropdownMenuTrigger>
+                )}
               </div>
-            </DropdownMenuTrigger>
+            </div>
             {!fromCurrentUser && isEdited && (
               <span className="text-[9px] text-muted-foreground ml-1">
                 (edited)
@@ -223,10 +277,12 @@ export default function Message({
       >
         {fromCurrentUser && (
           <>
-            <DropdownMenuItem onClick={handleEdit}>
-              <Edit className="size-4 mr-2" />
-              Edit
-            </DropdownMenuItem>
+            {type === "text" && (
+              <DropdownMenuItem onClick={handleEdit}>
+                <Edit className="size-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               onClick={handleDelete}
               className=""

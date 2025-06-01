@@ -22,9 +22,11 @@ import {
   Trash,
   Users,
   UserPlus,
+  Phone,
+  Video,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import DeleteFriendDialog from "./_components/DeleteFriendDialog";
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
@@ -37,9 +39,15 @@ type HeaderProps = {
   imgUrl?: string;
   name: string;
   conversationId: Id<"conversations">;
+  setCallType: Dispatch<SetStateAction<"audio" | "video" | null>>;
 };
 
-export default function Header({ imgUrl, name, conversationId }: HeaderProps) {
+export default function Header({
+  imgUrl,
+  name,
+  conversationId,
+  setCallType,
+}: HeaderProps) {
   const [isDeleteFriendDialogOpen, setIsDeleteFriendDialogOpen] =
     useState(false);
   const [isDeleteGroupeDialogOpen, setIsDeleteGroupeDialogOpen] =
@@ -62,7 +70,7 @@ export default function Header({ imgUrl, name, conversationId }: HeaderProps) {
   );
 
   return (
-    <Card className="w-full flex items-center p-0 !border-none shadow-none justify-betweens ">
+    <Card className="w-full flex items-center p-0 !border-none shadow-none justify-betweens  ">
       <div className="flex w-full items-center gap-2  ">
         <Link href={"/conversations"} className="block lg:hidden">
           <CircleArrowLeft />
@@ -72,7 +80,26 @@ export default function Header({ imgUrl, name, conversationId }: HeaderProps) {
           <AvatarFallback>{name.charAt(0).toLocaleUpperCase()}</AvatarFallback>
         </Avatar>
         <h2 className="font-semibold">{name}</h2>
-        <div className="ml-auto">
+        <div className="ml-auto flex gap-2">
+          <Button
+            className=""
+            variant="ghost"
+            size="icon"
+            onClick={() => setCallType("video")}
+          >
+            <Phone />
+          </Button>
+
+          <Button
+            className=""
+            variant="ghost"
+            size="icon"
+            onClick={() => setCallType("video")}
+          >
+            <Video />
+          </Button>
+        </div>
+        <div className="">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">

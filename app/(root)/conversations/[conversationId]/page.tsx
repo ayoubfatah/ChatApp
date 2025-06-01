@@ -4,7 +4,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 import Header from "./Header";
 import Body from "./_components/body/Body";
 import ChatInput from "./_components/input/ChatInput";
@@ -18,6 +18,7 @@ type ConversationPageProps = {
 export default function ConversationPage({
   params: { conversationId },
 }: ConversationPageProps) {
+  const [callType, setCallType] = useState<"audio" | "video" | null>(null);
   const conversation = useQuery(api.conversation.get, {
     conversationId: conversationId,
   });
@@ -35,6 +36,7 @@ export default function ConversationPage({
   ) : (
     <ConversationContainer>
       <Header
+        setCallType={setCallType}
         imgUrl={
           conversation.isGroup
             ? undefined
@@ -48,6 +50,8 @@ export default function ConversationPage({
         conversationId={conversationId}
       />
       <Body
+        setCallType={setCallType}
+        callType={callType}
         members={
           conversation.isGroup
             ? conversation.otherMembers
