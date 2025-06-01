@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
     // number of pages that should be kept simultaneously without being disposed
     pagesBufferLength: 2,
   },
+
+  images: {
+    domains: ["img.clerk.com", "utfs.io", "slya2k1igv.ufs.sh"],
+  },
   // Disable the error overlay
   webpack: (config, { dev, isServer }) => {
     if (dev && !isServer) {

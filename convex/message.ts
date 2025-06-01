@@ -6,7 +6,7 @@ export const create = mutation({
   args: {
     conversationId: v.id("conversations"),
     type: v.string(),
-    content: v.array(v.string()),
+    content: v.array(v.union(v.string(), v.array(v.string()))),
     replyTo: v.optional(v.id("messages")),
   },
   handler: async (ctx, args) => {
@@ -44,11 +44,18 @@ export const create = mutation({
         );
       }
     }
+
+    // Flatten the content array if it contains nested arrays
+    const flattenedContent = args.content.map((item) =>
+      Array.isArray(item) ? item[0] : item
+    );
+
     // creating the message
     const message = await ctx.db.insert("messages", {
       senderId: currentUser._id,
       isEdited: false,
       ...args,
+      content: flattenedContent,
     });
     await ctx.db.patch(args.conversationId, { lastMessageId: message });
     return message;

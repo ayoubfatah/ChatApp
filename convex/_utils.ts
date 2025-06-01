@@ -18,6 +18,11 @@ export const getMessagesContent = (type: string, content: string) => {
   switch (type) {
     case "text":
       return content;
+
+    case "imageUploader":
+      return "[Image]";
+    case "file":
+      return "Sent A file ";
     default:
       return "[Non-text]";
   }

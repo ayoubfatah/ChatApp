@@ -14,6 +14,7 @@ import { api } from "@/convex/_generated/api";
 import useMutationState from "@/hooks/useMutationState";
 import { toast } from "sonner";
 import { useCallback } from "react";
+import { ImagePreview } from "./ImagePreview";
 
 type Message = {
   fromCurrentUser: boolean;
@@ -150,38 +151,61 @@ export default function Message({
               asChild
             >
               <div className="flex flex-col">
-                <div
-                  className={cn(
-                    "message-box transition-colors duration-300 rounded-lg px-4 py-2",
-                    fromCurrentUser
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted",
-                    type === "text" &&
-                      "text-wrap break-words whitespace-pre-wrap break-all",
-                    lastByUser && !fromCurrentUser && "rounded-tl-none",
-                    isLastMessage && fromCurrentUser && "rounded-br-none"
-                  )}
-                >
-                  {content.map((text, i) => (
-                    <div key={i}>
-                      <p className="">{text}</p>
-                    </div>
-                  ))}
-                  <p
+                {type === "text" && (
+                  <div
                     className={cn(
-                      "text-[9px] flex items-center gap-2",
+                      "message-box transition-colors duration-300 rounded-lg px-4 py-2",
                       fromCurrentUser
-                        ? "text-primary-foreground"
-                        : "text-muted-foreground"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted",
+                      type === "text" &&
+                        "text-wrap break-words whitespace-pre-wrap break-all",
+                      lastByUser && !fromCurrentUser && "rounded-tl-none",
+                      isLastMessage && fromCurrentUser && "rounded-br-none"
                     )}
                   >
-                    {formatDistanceToNow(createdAt, {
-                      addSuffix: true,
-                    })}
-                    {!isGroup && seen}
-                  </p>
-                </div>
-                {seen}
+                    {content.map((text, i) => (
+                      <div key={i}>
+                        <p className="">{text}</p>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between">
+                      <p
+                        className={cn(
+                          "text-[9px] flex items-center gap-2",
+                          fromCurrentUser
+                            ? "text-primary-foreground"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        {formatDistanceToNow(createdAt, {
+                          addSuffix: true,
+                        })}
+                        {!isGroup && seen}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {type === "imageUploader" && (
+                  <div className="message-box">
+                    <ImagePreview urls={content} />
+                    <div className="flex items-center justify-between mt-2">
+                      <p
+                        className={cn(
+                          "text-[9px] flex items-center gap-2",
+                          fromCurrentUser
+                            ? "text-primary-foreground"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        {formatDistanceToNow(createdAt, {
+                          addSuffix: true,
+                        })}
+                        {!isGroup && seen}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </DropdownMenuTrigger>
             {!fromCurrentUser && isEdited && (
