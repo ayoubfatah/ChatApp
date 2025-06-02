@@ -32,14 +32,16 @@ import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
 import DeleteGroupDialog from "./_components/DeleteGroupDialog";
 import LeaveGroupDialog from "./_components/LeaveGroupDialog";
-import { formatDistanceToNow } from "date-fns";
 import AddUsersDialog from "./_components/AddUsersDialog";
+import { formatLastSeen } from "@/utils/formatLastSeen";
+import { formatDistanceToNow } from "date-fns";
 
 type HeaderProps = {
   imgUrl?: string;
   name: string;
   conversationId: Id<"conversations">;
   setCallType: Dispatch<SetStateAction<"audio" | "video" | null>>;
+  userId?: Id<"users">;
 };
 
 export default function Header({
@@ -47,6 +49,7 @@ export default function Header({
   name,
   conversationId,
   setCallType,
+  userId,
 }: HeaderProps) {
   const [isDeleteFriendDialogOpen, setIsDeleteFriendDialogOpen] =
     useState(false);
@@ -69,17 +72,50 @@ export default function Header({
       : "skip"
   );
 
+  // Get user's online status if it's a DM conversation
+  const userStatus = useQuery(
+    api.online.getUserStatus,
+    !conversation?.isGroup && userId
+      ? {
+          userId: userId,
+        }
+      : "skip"
+  );
+
   return (
     <Card className="w-full flex items-center p-0 !border-none shadow-none justify-betweens  ">
       <div className="flex w-full items-center gap-2  ">
         <Link href={"/conversations"} className="block lg:hidden">
           <CircleArrowLeft />
         </Link>
-        <Avatar className="size-8">
-          <AvatarImage src={imgUrl} />
-          <AvatarFallback>{name.charAt(0).toLocaleUpperCase()}</AvatarFallback>
-        </Avatar>
-        <h2 className="font-semibold">{name}</h2>
+        <div className="relative">
+          <Avatar className="size-8">
+            <AvatarImage src={imgUrl} />
+            <AvatarFallback>
+              {name.charAt(0).toLocaleUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          {!conversation?.isGroup && userId && userStatus && (
+            <span
+              className={`absolute bottom-0 right-0 size-2 rounded-full border-2 border-background ${
+                userStatus.isOnline ? "bg-green-500" : "bg-gray-400"
+              }`}
+            />
+          )}
+        </div>
+        <div className="flex flex-col">
+          <h2 className="font-semibold">{name}</h2>
+          {!conversation?.isGroup &&
+            userId &&
+            userStatus &&
+            (userStatus.isOnline ? (
+              <span className="text-xs text-green-500">Online</span>
+            ) : userStatus.lastSeen ? (
+              <span className="text-xs text-muted-foreground">
+                Last seen {formatLastSeen(userStatus.lastSeen)}
+              </span>
+            ) : null)}
+        </div>
         <div className="ml-auto flex gap-2">
           <Button
             className=""

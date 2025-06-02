@@ -9,6 +9,7 @@ import React from "react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
+import { formatLastSeen } from "@/utils/formatLastSeen";
 
 type DMconversationItemProps = {
   id: Id<"conversations">;
@@ -17,6 +18,7 @@ type DMconversationItemProps = {
   lastMessageSender?: string;
   lastMessageContent?: string;
   unSeenCount?: number;
+  userId: Id<"users">;
 };
 
 export default function DMconversationItem({
@@ -26,13 +28,14 @@ export default function DMconversationItem({
   lastMessageContent,
   lastMessageSender,
   unSeenCount = 0,
+  userId,
 }: DMconversationItemProps) {
-  const { userId } = useAuth();
+  const { userId: clerkId } = useAuth();
   const user = useQuery(
     api.users.get,
-    userId
+    clerkId
       ? {
-          clerkId: userId,
+          clerkId: clerkId,
         }
       : undefined
   );
@@ -42,6 +45,16 @@ export default function DMconversationItem({
   const typingUsers = useQuery(api.conversation.getTypingStatus, {
     conversationId: id,
   });
+
+  // Get user's online status
+  const userStatus = useQuery(
+    api.online.getUserStatus,
+    userId
+      ? {
+          userId: userId,
+        }
+      : "skip"
+  );
 
   // Check if the other user is typing
   const isOtherUserTyping = typingUsers && typingUsers.length > 0;
@@ -57,10 +70,27 @@ export default function DMconversationItem({
                 <User />
               </AvatarFallback>
             </Avatar>
-            <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-background" />
+            {userId &&
+              userStatus &&
+              (userStatus.isOnline ? (
+                <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-background" />
+              ) : userStatus.lastSeen ? (
+                <span className="absolute bottom-0 right-0 size-3 bg-gray-400 rounded-full border-2 border-background" />
+              ) : null)}
           </div>
           <div className="flex flex-col truncate">
-            <h4 className="truncate">{username}</h4>
+            <div className="flex items-center gap-2">
+              <h4 className="truncate">{username}</h4>
+              {userId &&
+                userStatus &&
+                (userStatus.isOnline ? (
+                  <span className="text-xs text-green-500">Online</span>
+                ) : userStatus.lastSeen ? (
+                  <span className="text-xs text-muted-foreground">
+                    {formatLastSeen(userStatus.lastSeen)}
+                  </span>
+                ) : null)}
+            </div>
             {isOtherUserTyping ? (
               <p className="text-sm text-muted-foreground italic">
                 {username} is typing...

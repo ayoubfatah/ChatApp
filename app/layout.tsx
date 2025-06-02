@@ -8,6 +8,7 @@ import ConvexClientProvider from "@/providers/ConvexClientProvider";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import OnlineStatusProvider from "@/components/providers/OnlineStatusProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,8 +43,10 @@ export default function RootLayout({
         >
           <ClerkProvider>
             <ConvexClientProvider>
-              <TooltipProvider>{children}</TooltipProvider>
-              <Toaster position="top-center" richColors />
+              <OnlineStatusProvider>
+                <TooltipProvider>{children}</TooltipProvider>
+                <Toaster position="top-center" richColors />
+              </OnlineStatusProvider>
             </ConvexClientProvider>
           </ClerkProvider>
         </ThemeProvider>

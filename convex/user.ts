@@ -9,7 +9,11 @@ export const create = internalMutation({
     email: v.string(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.insert("users", args);
+    await ctx.db.insert("users", {
+      ...args,
+      isOnline: true,
+      lastSeen: Date.now(),
+    });
   },
 });
 

@@ -36,7 +36,6 @@ export default function ConversationPage({
   ) : (
     <ConversationContainer>
       <Header
-        setCallType={setCallType}
         imgUrl={
           conversation.isGroup
             ? undefined
@@ -48,6 +47,8 @@ export default function ConversationPage({
             : conversation.otherMember.username || ""
         }
         conversationId={conversationId}
+        userId={conversation.otherMember._id}
+        setCallType={setCallType}
       />
       <Body
         setCallType={setCallType}
