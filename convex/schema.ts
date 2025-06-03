@@ -70,4 +70,43 @@ export default defineSchema({
   })
     .index("by_conversationId", ["conversationId"])
     .index("by_userId", ["userId"]),
+
+  calls: defineTable({
+    conversationId: v.id("conversations"), // Which conversation is calling
+    initiatorId: v.id("users"), // Who started the call
+
+    // Call status - this is KEY for showing notifications
+    status: v.union(
+      v.literal("ringing"), // 📞 Call just started, waiting for answer
+      v.literal("active"), // ✅ Someone answered, call is ongoing
+      v.literal("ended"), // 🏁 Call finished normally
+      v.literal("rejected"), // ❌ Recipient declined
+      v.literal("missed"), // 📵 No one answered
+      v.literal("cancelled") // 🚫 Caller cancelled before answer
+    ),
+
+    type: v.union(v.literal("video"), v.literal("audio")), // Video or voice call
+    roomId: v.string(), // LiveKit room ID for the actual call
+    startedAt: v.number(), // When call was initiated
+    answeredAt: v.optional(v.number()), // When someone picked up
+    endedAt: v.optional(v.number()), // When call ended
+    duration: v.optional(v.number()), // How long the call lasted
+  })
+    // These indexes help us find calls quickly
+    .index("by_conversation", ["conversationId"]) // Find calls for a chat
+    .index("by_initiator", ["initiatorId"]) // Find calls user started
+    .index("by_status", ["status"]) // Find active calls
+    .index("by_conversation_status", ["conversationId", "status"]), // Find active calls in a chat
+
+  // 🆕 NEW: This table tracks who's in each call (supports group calls)
+  callParticipants: defineTable({
+    callId: v.id("calls"), // Which call this is for
+    userId: v.id("users"), // Which user this is
+    joinedAt: v.optional(v.number()), // When they joined the call
+    leftAt: v.optional(v.number()), // When they left the call
+    role: v.union(v.literal("initiator"), v.literal("participant")), // Who started vs joined
+  })
+    .index("by_call", ["callId"]) // Find all participants in a call
+    .index("by_user", ["userId"]) // Find all calls a user is in
+    .index("by_call_user", ["callId", "userId"]), // Find specific user
 });
