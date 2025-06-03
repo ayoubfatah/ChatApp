@@ -121,7 +121,7 @@ export default function Header({
             className=""
             variant="ghost"
             size="icon"
-            onClick={() => setCallType("video")}
+            onClick={() => setCallType("audio")}
           >
             <Phone />
           </Button>

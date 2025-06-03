@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthenticatedUser } from "./_utils";
+import { Id } from "./_generated/dataModel";
 
 // Update user's online status
 export const updateOnlineStatus = mutation({
@@ -8,15 +9,24 @@ export const updateOnlineStatus = mutation({
     isOnline: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const currentUser = await getAuthenticatedUser(ctx);
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
 
-    // Update the user's online status and last seen timestamp
-    await ctx.db.patch(currentUser._id, {
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(user._id, {
       isOnline: args.isOnline,
-      lastSeen: args.isOnline ? Date.now() : Date.now(),
+      lastSeen: args.isOnline ? undefined : Date.now(),
     });
-
-    return { success: true };
   },
 });
 
@@ -49,11 +59,11 @@ export const getUserStatus = query({
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
     if (!user) {
-      throw new ConvexError("User not found");
+      throw new Error("User not found");
     }
 
     return {
-      isOnline: user.isOnline,
+      isOnline: user.isOnline ?? false,
       lastSeen: user.lastSeen,
     };
   },

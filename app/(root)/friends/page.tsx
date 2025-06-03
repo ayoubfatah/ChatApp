@@ -1,16 +1,17 @@
 "use client";
 import ConversationFallback from "@/components/shared/conversation/ConversationFallback";
 import ItemList from "@/components/shared/item-list/itemList";
-import { useQuery } from "convex/react";
-import AddFriendDialog from "./_components/AddFriendDialog";
+import DesktopNav from "@/components/shared/sidebar/nav/DesktopNav";
 import { api } from "@/convex/_generated/api";
+import { useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
+import AddFriendDialog from "./_components/AddFriendDialog";
 import Request from "./_components/Request";
 import SentRequest from "./_components/SentRequest";
 
 export default function FriendsPage() {
   const requests = useQuery(api.requests.get);
-  
+
   const requestsSent = useQuery(api.requests.getSentRequests);
 
   return (
@@ -52,6 +53,10 @@ export default function FriendsPage() {
               </div>
             </div>
           )}
+
+          <div className="flex items-center justify-center ">
+            <DesktopNav />
+          </div>
         </div>
       </ItemList>
       <ConversationFallback />

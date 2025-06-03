@@ -14,9 +14,9 @@ export default function DesktopNav() {
   const { paths } = useNavigation();
 
   return (
-    <Card className="hidden lg:flex lg:flex-col lg:justify-between lg:items-center lg:h-full lg:w-16 lg:px-2 lg:py-4">
+    <Card className="hidden lg:flex lg:flex-row lg:justify-between lg:items-center lg:h-16 lg:px-4 lg:py-2 mt-auto -translate-y-[40px] shadow-none bg-transparent border-none ">
       <nav>
-        <ul className="flex flex-col items-center gap-4">
+        <ul className="flex justify-center gap-7 items-center">
           {paths.map((path, id) => {
             return (
               <li key={id} className="relative">
@@ -43,12 +43,14 @@ export default function DesktopNav() {
               </li>
             );
           })}
+          <li>
+            <ThemeToggle />
+          </li>
+          <li className="translate-y-[4px]">
+            <UserButton afterSwitchSessionUrl="/" afterSignOutUrl="/" />
+          </li>
         </ul>
       </nav>
-      <div className="flex flex-col items-center gap-4">
-        <ThemeToggle />
-        <UserButton afterSignOutUrl="/" />
-      </div>
     </Card>
   );
 }

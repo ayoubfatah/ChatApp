@@ -32,6 +32,7 @@ export default function Body({
   members,
   isGroup,
 }: BodyProps) {
+  console.log(setCallType);
   const { conversationId } = useConversation();
   const messages = useQuery(api.messages.get, {
     conversationId: conversationId as Id<"conversations">,
@@ -147,7 +148,7 @@ export default function Body({
           );
         })
       ) : (
-        <CallRoom />
+        <CallRoom callType={callType} />
       )}
     </div>
   );

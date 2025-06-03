@@ -43,11 +43,11 @@ export default function ConversationPage({
         }
         name={
           conversation.isGroup
-            ? conversation.name
-            : conversation.otherMember.username || ""
+            ? conversation?.name
+            : conversation?.otherMember?.username || ""
         }
         conversationId={conversationId}
-        userId={conversation.otherMember._id}
+        userId={conversation?.otherMember?._id}
         setCallType={setCallType}
       />
       <Body

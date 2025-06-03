@@ -7,6 +7,7 @@ import { ReactNode, useMemo } from "react";
 import DMconversationItem from "./_components/DMconversationItem";
 import { CreateGroupDialog } from "./_components/CreateGroupDialog";
 import GroupConversationItem from "./_components/GroupConversations";
+import DesktopNav from "@/components/shared/sidebar/nav/DesktopNav";
 
 export default function ConversationsLayout({
   children,
@@ -54,6 +55,7 @@ export default function ConversationsLayout({
                 />
               ) : (
                 <DMconversationItem
+                  userId={conversation?.otherMember?._id}
                   key={conversation?.conversation?._id}
                   id={conversation?.conversation?._id}
                   imgUrl={conversation?.otherMember?.imgUrl}
@@ -73,8 +75,8 @@ export default function ConversationsLayout({
             <Loader2 />
           </div>
         )}
+        <DesktopNav />
       </ItemList>
-
       {children}
     </>
   );

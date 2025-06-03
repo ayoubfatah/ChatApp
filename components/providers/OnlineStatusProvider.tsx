@@ -3,50 +3,67 @@
 import { useUser } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function OnlineStatusProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded, isSignedIn } = useUser();
   const updateOnlineStatus = useMutation(api.online.updateOnlineStatus);
+  const isOnlineRef = useRef(false);
 
   useEffect(() => {
-    if (!isLoaded || !user) return;
-
-    // Set user as online when they connect
-    const setOnline = async () => {
-      try {
-        await updateOnlineStatus({ isOnline: true });
-      } catch (error) {
-        console.error("Failed to update online status:", error);
+    if (!isLoaded || !isSignedIn) {
+      if (isOnlineRef.current) {
+        updateOnlineStatus({ isOnline: false });
+        isOnlineRef.current = false;
       }
+      return;
+    }
+
+    // Set online
+    const setOnline = () => {
+      updateOnlineStatus({ isOnline: true });
+      isOnlineRef.current = true;
     };
+
+    const setOffline = () => {
+      updateOnlineStatus({ isOnline: false });
+      isOnlineRef.current = false;
+    };
+
     setOnline();
 
-    // Set user as offline when they disconnect
-    const handleBeforeUnload = async () => {
-      try {
-        await updateOnlineStatus({ isOnline: false });
-      } catch (error) {
-        console.error("Failed to update online status:", error);
+    // Handle visibility change
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        setOffline();
+      } else {
+        setOnline();
       }
     };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    // Use pagehide instead of beforeunload - more reliable
+    const handlePageHide = () => {
+      if (isOnlineRef.current) {
+        setOffline();
+        isOnlineRef.current = false;
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
 
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      // Set offline when component unmounts
-      try {
-        updateOnlineStatus({ isOnline: false });
-      } catch (error) {
-        console.error("Failed to update online status:", error);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      if (isOnlineRef.current) {
+        setOffline();
       }
     };
-  }, [user, isLoaded, updateOnlineStatus]);
+  }, [user, isLoaded, isSignedIn, updateOnlineStatus]);
 
   return <>{children}</>;
 }

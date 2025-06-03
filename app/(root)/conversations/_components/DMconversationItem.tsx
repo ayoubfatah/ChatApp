@@ -2,14 +2,12 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
+import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { useAuth } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
 import { User } from "lucide-react";
 import Link from "next/link";
-import React from "react";
-import { useAuth } from "@clerk/nextjs";
-import { api } from "@/convex/_generated/api";
-import { useQuery } from "convex/react";
-import { formatLastSeen } from "@/utils/formatLastSeen";
 
 type DMconversationItemProps = {
   id: Id<"conversations">;
@@ -81,15 +79,6 @@ export default function DMconversationItem({
           <div className="flex flex-col truncate">
             <div className="flex items-center gap-2">
               <h4 className="truncate">{username}</h4>
-              {userId &&
-                userStatus &&
-                (userStatus.isOnline ? (
-                  <span className="text-xs text-green-500">Online</span>
-                ) : userStatus.lastSeen ? (
-                  <span className="text-xs text-muted-foreground">
-                    {formatLastSeen(userStatus.lastSeen)}
-                  </span>
-                ) : null)}
             </div>
             {isOtherUserTyping ? (
               <p className="text-sm text-muted-foreground italic">
