@@ -28,9 +28,9 @@ export default function DMconversationItem({
   unSeenCount = 0,
   userId,
 }: DMconversationItemProps) {
-  const { userId: clerkId } = useAuth();
+  const { userId: clerkId, isLoaded } = useAuth();
   const user = useQuery(
-    api.users.get,
+    isLoaded && api.users.get,
     clerkId
       ? {
           clerkId: clerkId,
@@ -46,7 +46,7 @@ export default function DMconversationItem({
 
   // Get user's online status
   const userStatus = useQuery(
-    api.online.getUserStatus,
+    isLoaded && api.online.getUserStatus,
     userId
       ? {
           userId: userId,
@@ -72,9 +72,9 @@ export default function DMconversationItem({
               userStatus &&
               (userStatus.isOnline ? (
                 <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-background" />
-              ) : userStatus.lastSeen ? (
+              ) : (
                 <span className="absolute bottom-0 right-0 size-3 bg-gray-400 rounded-full border-2 border-background" />
-              ) : null)}
+              ))}
           </div>
           <div className="flex flex-col truncate">
             <div className="flex items-center gap-2">

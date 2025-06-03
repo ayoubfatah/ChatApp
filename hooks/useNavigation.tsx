@@ -3,14 +3,22 @@ import { useQuery } from "convex/react";
 import { MessageSquare, Users } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useMemo } from "react";
+import { useUser } from "@clerk/nextjs";
 
 export default function useNavigation() {
   const pathname = usePathname();
-  const requestsCount = useQuery(api.requests.count);
-  const conversations = useQuery(api.conversations.get);
+  const { isLoaded, isSignedIn } = useUser();
+  const requestsCount = useQuery(
+    api.requests.count,
+    isLoaded && isSignedIn ? {} : "skip"
+  );
+  const conversations = useQuery(
+    api.conversations.get,
+    isLoaded && isSignedIn ? {} : "skip"
+  );
 
   const unSeenMessagesCount = useMemo(() => {
-    return conversations?.reduce((acc, curr) => acc + curr.unSeenCount, 0);
+    return conversations?.reduce((acc, curr) => acc + curr.unSeenCount, 0) ?? 0;
   }, [conversations]);
 
   console.log(conversations, "ss");
@@ -28,7 +36,7 @@ export default function useNavigation() {
         href: "/friends",
         icon: <Users />,
         active: pathname.startsWith("/friends"),
-        count: requestsCount,
+        count: requestsCount ?? 0,
       },
     ],
     [pathname, requestsCount, unSeenMessagesCount]

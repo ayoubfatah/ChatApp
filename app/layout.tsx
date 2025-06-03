@@ -2,13 +2,13 @@ import { ClerkProvider } from "@clerk/nextjs";
 
 import type { Metadata } from "next";
 
+import OnlineStatusProvider from "@/components/providers/OnlineStatusProvider";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ConvexClientProvider from "@/providers/ConvexClientProvider";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme/theme-provider";
-import OnlineStatusProvider from "@/components/providers/OnlineStatusProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +35,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <div
+          id="call_room_portal"
+          className="flex items-center justify-center z-[100000]"
+        ></div>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

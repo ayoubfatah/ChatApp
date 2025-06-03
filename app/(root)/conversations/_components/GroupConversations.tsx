@@ -25,8 +25,8 @@ export default function GroupConversationItem({
   lastMessageSender,
   unSeenCount = 0,
 }: GroupConversationItemProps) {
-  const { userId } = useAuth();
-  const user = useQuery(api.users.get, { clerkId: userId });
+  const { userId, isLoaded } = useAuth();
+  const user = useQuery(isLoaded && api.users.get, { clerkId: userId });
   const currentUserUsername = user?.username;
 
   return (

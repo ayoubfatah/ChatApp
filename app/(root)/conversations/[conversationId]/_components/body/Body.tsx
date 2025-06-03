@@ -9,11 +9,12 @@ import {
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 import { useMutation, useQuery } from "convex/react";
-import { CheckCheck } from "lucide-react";
-import { Dispatch, SetStateAction, useEffect } from "react";
-import CallRoom from "./CallRoom";
+import { CheckCheck, ChevronDown } from "lucide-react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import { CallDialog } from "./CallRoom";
 import Message from "./Message";
 import TypingIndicator from "./TypingIndicator";
+import { Button } from "@/components/ui/button";
 
 type BodyProps = {
   members: {
@@ -32,7 +33,6 @@ export default function Body({
   members,
   isGroup,
 }: BodyProps) {
-  console.log(setCallType);
   const { conversationId } = useConversation();
   const messages = useQuery(api.messages.get, {
     conversationId: conversationId as Id<"conversations">,
@@ -41,6 +41,8 @@ export default function Body({
   const typingUsers = useQuery(api.conversation.getTypingStatus, {
     conversationId: conversationId as Id<"conversations">,
   });
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (messages && messages.length > 0)
@@ -49,6 +51,32 @@ export default function Body({
         id: conversationId as Id<"conversations">,
       });
   }, [conversationId, markRead, messages]);
+
+  useEffect(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop } = container;
+      // Show button when we're not at the bottom (with a small threshold)
+      const isAtBottom = scrollTop <= 10;
+      setShowScrollButton(!isAtBottom);
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    // Initial check
+    handleScroll();
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+  };
 
   const formatSeenBy = (names: string[]) => {
     if (!isGroup) {
@@ -96,6 +124,7 @@ export default function Body({
         );
     }
   };
+
   const getSeenMessage = (messageId: Id<"messages">) => {
     const seenUsers = members
       .filter((member) => member.lastSeenMessageId === messageId)
@@ -103,8 +132,12 @@ export default function Body({
     if (seenUsers.length === 0) return undefined;
     return formatSeenBy(seenUsers);
   };
+
   return (
-    <div className="flex-1 w-full flex overflow-y-scroll flex-col-reverse gap-2 p-3 no-scrollbar">
+    <div
+      className="flex-1 w-full flex overflow-y-scroll flex-col-reverse gap-2 p-3 no-scrollbar relative"
+      ref={chatContainerRef}
+    >
       {typingUsers && typingUsers.length > 0 && (
         <TypingIndicator users={typingUsers} />
       )}
@@ -148,7 +181,16 @@ export default function Body({
           );
         })
       ) : (
-        <CallRoom callType={callType} />
+        <CallDialog callType={callType} setCallType={setCallType} />
+      )}
+      {showScrollButton && !callType && (
+        <Button
+          onClick={scrollToBottom}
+          className="fixed bottom-20 right-4 rounded-full p-2 h-10 w-10 bg-primary hover:bg-primary/90 shadow-lg"
+          size="icon"
+        >
+          <ChevronDown className="h-5 w-5" />
+        </Button>
       )}
     </div>
   );
