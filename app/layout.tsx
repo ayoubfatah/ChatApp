@@ -9,6 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import ConvexClientProvider from "@/providers/ConvexClientProvider";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { CallProvider } from "@/hooks/useCalls";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,12 +47,14 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ClerkProvider>
-            <ConvexClientProvider>
-              <OnlineStatusProvider>
-                <TooltipProvider>{children}</TooltipProvider>
-                <Toaster position="top-center" richColors />
-              </OnlineStatusProvider>
-            </ConvexClientProvider>
+            <CallProvider>
+              <ConvexClientProvider>
+                <OnlineStatusProvider>
+                  <TooltipProvider>{children}</TooltipProvider>
+                  <Toaster position="top-center" richColors />
+                </OnlineStatusProvider>
+              </ConvexClientProvider>
+            </CallProvider>
           </ClerkProvider>
         </ThemeProvider>
       </body>

@@ -117,16 +117,14 @@ export default function Header({
             ) : null)}
         </div>
         <div className="ml-auto flex gap-2">
-          <Link href={`/conversation/${conversationId}`}>
-            <Button
-              className=""
-              variant="ghost"
-              size="icon"
-              onClick={() => setCallType("audio")}
-            >
-              <Phone />
-            </Button>
-          </Link>
+          <Button
+            className=""
+            variant="ghost"
+            size="icon"
+            onClick={() => setCallType("audio")}
+          >
+            <Phone />
+          </Button>
 
           <Button
             className=""

@@ -1,6 +1,8 @@
 "use client";
 
 import { Dialog } from "@/components/ui/dialog";
+import { Id } from "@/convex/_generated/dataModel";
+import { useCall } from "@/hooks/useCalls";
 import useConversation from "@/hooks/useConversation";
 import { useUser } from "@clerk/nextjs";
 import {
@@ -90,6 +92,16 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
   const { conversationId } = useConversation();
   const [isMinimized, setIsMinimized] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
+  const {
+    activeCalls,
+    incomingCalls, // These will trigger notification modals
+    ongoingCall, // This will show the call room
+    initiateCall,
+    answerCall,
+    rejectCall,
+    endCall,
+    isInCall,
+  } = useCall();
 
   // *** LIVEKIT ROOM INSTANCE ***
   // This is where the actual WebRTC connection happens
@@ -126,6 +138,11 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
         // *** API CALL TO GET LIVEKIT TOKEN ***
         // This is where you can add call acceptance logic
         // For incoming calls, you might want to show accept/reject UI first
+        const { callId, roomId } = await initiateCall(
+          conversationId as Id<"conversations">,
+          callType
+        );
+        console.log({ user, callId, roomId });
         const resp = await fetch(
           `/api/livekit?room=${conversationId}&username=${user.fullName}`
         );
@@ -178,7 +195,16 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
       console.log("👋 Disconnecting...");
       roomInstance.disconnect();
     };
-  }, [roomInstance, user?.fullName, conversationId, isLoaded, isSignedIn]);
+  }, [
+    roomInstance,
+    user?.fullName,
+    conversationId,
+    isLoaded,
+    isSignedIn,
+    initiateCall,
+    callType,
+    user,
+  ]);
 
   // *** TIME FORMATTING UTILITY ***
   // Customize how call duration is displayed
