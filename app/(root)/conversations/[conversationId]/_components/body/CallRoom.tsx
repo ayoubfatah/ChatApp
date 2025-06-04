@@ -1,7 +1,8 @@
 "use client";
 
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { Id } from "@/convex/_generated/dataModel";
 import { useCall } from "@/hooks/useCalls";
 import useConversation from "@/hooks/useConversation";
 import { useUser } from "@clerk/nextjs";
@@ -23,12 +24,19 @@ import {
   Minimize2,
   Phone,
   PhoneOff,
+  ScreenShare,
+  ScreenShareOff,
   Video,
   VideoOff,
   Volume2,
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import "./call-room.css";
+import PulseButton from "../callroomComponents/pulseButton";
+import ControlButton from "../callroomComponents/ControlButton";
+import { cn } from "@/lib/utils";
 
 type CallRoomProps = {
   callType: "audio" | "video";
@@ -45,7 +53,8 @@ type CallRoomProps = {
 function CallDialog({ callType, setCallType }: CallRoomProps) {
   const [mounted, setMounted] = useState(false);
   const [portalNode, setPortalNode] = useState<HTMLElement | null>(null); // Added type for portalNode
-  const isOpen = callType === "audio" || callType === "video";
+  const isOpen = true;
+  // const isOpen = callType === "audio" || callType === "video";
 
   useEffect(() => {
     setMounted(true);
@@ -71,8 +80,18 @@ function CallDialog({ callType, setCallType }: CallRoomProps) {
       {isOpen &&
         portalNode &&
         createPortal(
-          <div className="flex justify-center items-center p-0 border-none overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 fixed  inset-07 sm:inset-[40px] z-[100]">
+          <div className="flex justify-center items-center p-0 border-none rounded-2xl overflow-hidden bg-gradient-to-br from-slate-700 to-slate-800 fixed  inset-0 sm:inset-[0px] mx-40 my-10 z-[100]">
             <div className=" h-full w-full relative">
+              <Button
+                onClick={() => {
+                  setCallType(null);
+                }}
+                size="icon"
+                className="absolute left-2  top-2 rounded-full  size-[18px] "
+                variant="destructive"
+              >
+                <X className="text-[46px]" />
+              </Button>
               <CallRoom callType={callType} setCallType={setCallType} />
             </div>
           </div>,
@@ -92,6 +111,8 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
   const { conversationId } = useConversation();
   const [isMinimized, setIsMinimized] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
+
+  const status = "ringing";
   const {
     activeCalls,
     incomingCalls, // These will trigger notification modals
@@ -138,11 +159,12 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
         // *** API CALL TO GET LIVEKIT TOKEN ***
         // This is where you can add call acceptance logic
         // For incoming calls, you might want to show accept/reject UI first
-        const { callId, roomId } = await initiateCall(
-          conversationId as Id<"conversations">,
-          callType
-        );
-        console.log({ user, callId, roomId });
+
+        // const { callId, roomId } = await initiateCall(
+        //   conversationId as Id<"conversations">,
+        //   callType
+        // );
+
         const resp = await fetch(
           `/api/livekit?room=${conversationId}&username=${user.fullName}`
         );
@@ -158,6 +180,7 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
           : `wss://${livekitUrl}`;
 
         // *** ACTUAL ROOM CONNECTION ***
+
         // This is where the call gets established
         await roomInstance.connect(wsUrl, data.token);
 
@@ -201,9 +224,9 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
     conversationId,
     isLoaded,
     isSignedIn,
-    initiateCall,
-    callType,
     user,
+    // initiateCall,
+    callType,
   ]);
 
   // *** TIME FORMATTING UTILITY ***
@@ -221,7 +244,7 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
   // *** USER DATA LOADING STATE ***
   if (!isLoaded) {
     return (
-      <div className="h-full flex items-center justify-center bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+      <div className="h-full flex items-center justify-center  bg-gradient-to-br from-slate-700 to-slate-800">
         <div className="text-center text-white">
           {/* Customize loading spinner here */}
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
@@ -234,7 +257,7 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
   // *** AUTHENTICATION ERROR STATE ***
   if (!isSignedIn) {
     return (
-      <div className="h-full flex items-center justify-center bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+      <div className="h-full flex items-center justify-center  bg-gradient-to-br from-slate-700 to-slate-800">
         <div className="text-center text-white">
           {/* Customize auth error UI here */}
           <Phone className="h-16 w-16 mx-auto mb-4 text-blue-400" />
@@ -245,24 +268,163 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
   }
 
   // *** CONNECTION LOADING STATE ***
-  if (token === "") {
-    return (
-      <div className="h-full flex items-center justify-center bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-        <div className="text-center text-white">
-          {/* Customize connecting UI here - you can add ringing sounds */}
-          <div className="animate-pulse">
-            <Phone className="h-16 w-16 mx-auto mb-4 text-blue-400" />
-            <p>Connecting...</p>
-            {/* Add ringing animation or sound here */}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // if (token === "") {
+  //   return (
+  //     <div className="h-full flex items-center justify-center  bg-gradient-to-br from-slate-700 to-slate-800">
+  //       <div className="text-center text-white">
+  //         {/* Customize connecting UI here - you can add ringing sounds */}
+  //         <div className="animate-pulse">
+  //           <Phone className="h-16 w-16 mx-auto mb-4 text-blue-400" />
+  //           <p>Connecting...</p>
+  //           {/* Add ringing animation or sound here */}
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
+  // CALLER WAITING  UI
+
+  // if (token === "" || status === "ringing") {
+  //   return (
+  //     <div className="h-full flex flex-col items-center justify-center  bg-gradient-to-br from-slate-700 to-slate-800 ">
+  //       {/* Customize connecting UI here - you can add ringing sounds */}
+  //       <div className="relative">
+  //         <div className="pulse-ring pulse-ring-1" />
+  //         <div className="pulse-ring pulse-ring-2" />
+  //         <Avatar className="size-[150px] z-[1000]">
+  //           <AvatarImage
+  //             src={
+  //               "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKggN5o0di2XQXBIO8M7oHrE_qIXo27PwzWw&s"
+  //             }
+  //           />
+  //         </Avatar>
+  //       </div>
+  //       <div className="my-4">
+  //         <span className="flex items-center gap-1 mt-4">
+  //           Waiting for Hitler to answer
+  //           <span className="dots-animation">
+  //             <span className="dot">.</span>
+  //             <span className="dot">.</span>
+  //             <span className="dot">.</span>
+  //           </span>
+  //         </span>
+  //       </div>
+  //       <div className="flex items-center gap-12 mt-6">
+  //         <PulseButton
+  //           icon={X}
+  //           handleClick={() => {
+  //             if (ongoingCall) {
+  //               endCall(ongoingCall._id);
+  //             }
+  //             setCallType(null);
+  //           }}
+  //           className=" bg-red-500 hover:bg-red-600"
+  //           iconClassName="text-white"
+  //           fill="white"
+  //         />
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
+  // RECEIVER UI
+
+  // if (token === "" || status === "ringing") {
+  //   return (
+  //     <div className="h-full flex flex-col items-center justify-center  bg-gradient-to-br from-slate-700 to-slate-800 ">
+  //       {/* Customize connecting UI here - you can add ringing sounds */}
+  //       <div className="">
+  //         <Avatar className="size-[150px]">
+  //           <AvatarImage
+  //             src={
+  //               "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKggN5o0di2XQXBIO8M7oHrE_qIXo27PwzWw&s"
+  //             }
+  //           />
+  //         </Avatar>
+  //       </div>
+  //       <div className="my-4">
+  //         <span className="flex items-center gap-1 mt-4">
+  //           hitler calling
+  //           <span className="dots-animation">
+  //             <span className="dot">.</span>
+  //             <span className="dot">.</span>
+  //             <span className="dot">.</span>
+  //           </span>
+  //         </span>
+  //       </div>
+  //       <div className="flex items-center gap-12 mt-6">
+  //         <PulseButton
+  //           icon={X}
+  //           handleClick={() => {
+  //             if (ongoingCall) {
+  //               endCall(ongoingCall._id);
+  //             }
+  //             setCallType(null);
+  //           }}
+  //           className=" bg-red-500 hover:bg-red-600"
+  //           iconClassName="text-white"
+  //           fill="white"
+  //         />
+
+  //         <PulseButton
+  //           icon={Phone}
+  //           handleClick={() => {
+  //             if (ongoingCall) {
+  //               answerCall(ongoingCall._id);
+  //             }
+  //           }}
+  //           className="bg-green-500 hover:bg-green-600"
+  //           fill="white"
+  //         />
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
+  // Canceled ui / Redical
+
+  // if (token === "" || status === "ringing") {
+  //   return (
+  //     <div className="h-full flex flex-col items-center justify-center  bg-gradient-to-br from-slate-700 to-slate-800 ">
+  //       {/* Customize connecting UI here - you can add ringing sounds */}
+  //       <div className="relative">
+  //         <Avatar className="size-[150px] z-[1000]">
+  //           <AvatarImage
+  //             src={
+  //               "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKggN5o0di2XQXBIO8M7oHrE_qIXo27PwzWw&s"
+  //             }
+  //           />
+  //         </Avatar>
+  //       </div>
+  //       <div className="my-4">
+  //         <div className="flex flex-col items-center gap-1 mt-4">
+  //           <h1 className="text-[34px] font-bold"> Hitler</h1>
+  //           <h1>Busy</h1>
+  //         </div>
+  //       </div>
+  //       <div className="flex items-center gap-12 mt-6">
+  //         <PulseButton
+  //           icon={X}
+  //           handleClick={() => {
+  //             if (ongoingCall) {
+  //               endCall(ongoingCall._id);
+  //             }
+  //             setCallType(null);
+  //           }}
+  //           className=" bg-red-500 hover:bg-red-600"
+  //           iconClassName="text-white"
+  //           fill="white"
+  //         />
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   // ==========================================
   // MAIN CONNECTED CALL UI
   // ==========================================
+
   return (
     <RoomContext.Provider value={roomInstance}>
       {/* 
@@ -270,7 +432,7 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
         - Modify background colors/gradients here
         - Add custom backgrounds or patterns
       */}
-      <div className="h-full flex bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+      <div className="h-full flex  bg-gradient-to-br from-slate-700 to-slate-800 relative overflow-hidden">
         {/* ==========================================
             CALL HEADER - TOP BAR
             ========================================== */}
@@ -453,109 +615,76 @@ type CustomControlBarProps = {
 
 function CustomControlBar({ callType, setCallType }: CustomControlBarProps) {
   const room = useRoomContext();
-  const { localParticipant, isCameraEnabled, isMicrophoneEnabled } =
-    useLocalParticipant();
+  const {
+    localParticipant,
+    isCameraEnabled,
+    isMicrophoneEnabled,
+    isScreenShareEnabled,
+  } = useLocalParticipant();
 
-  // *** MICROPHONE TOGGLE HANDLER ***
   const toggleMic = () => {
     localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
-    // Add haptic feedback or sound effects here
   };
 
-  // *** CAMERA TOGGLE HANDLER ***
   const toggleCam = () => {
     localParticipant.setCameraEnabled(!isCameraEnabled);
-    // Add haptic feedback or sound effects here
   };
 
-  // *** CALL TERMINATION HANDLER ***
+  const toggleShareScreen = () => {
+    localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
+  };
+
   const leaveRoom = () => {
-    console.log("👋 Leaving room");
-
-    // *** ADD CONFIRMATION DIALOG HERE ***
-    // const confirmed = window.confirm("Are you sure you want to end the call?");
-    // if (!confirmed) return;
-
-    // *** DISCONNECT FROM ROOM ***
     room.disconnect();
-
-    // *** CLOSE CALL UI ***
     setCallType(null);
-
-    // *** ADD POST-CALL ACTIONS ***
-    // - Save call duration to database
-    // - Show call rating dialog
-    // - Navigate to specific page
   };
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 bg-black/40 backdrop-blur-md p-6">
-      <div className="flex justify-center items-center space-x-6">
-        {/* ==========================================
-            MICROPHONE CONTROL BUTTON
-            ========================================== */}
-        <button
-          onClick={toggleMic}
-          className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg ${
+    <div className="absolute bottom-0 left-0 right-0 bg-black/40 backdrop-blur-md p-6 z-[999999]">
+      <div className="flex justify-center items-center space-x-10 relative">
+        <ControlButton
+          handleClick={toggleMic}
+          icon={MicOff}
+          activeIcon={Mic}
+          isActive={isMicrophoneEnabled}
+          className={cn(
             isMicrophoneEnabled
-              ? "bg-gray-700/80 hover:bg-gray-600/80 text-white" // *** UNMUTED STYLING ***
-              : "bg-red-500 hover:bg-red-600 text-white animate-pulse" // *** MUTED STYLING ***
-          }`}
-        >
-          {isMicrophoneEnabled ? (
-            <Mic className="h-6 w-6" />
-          ) : (
-            <MicOff className="h-6 w-6" />
+              ? "bg-gray-700/80 hover:bg-gray-600/80 text-white"
+              : "bg-red-500 hover:bg-red-600 text-white"
           )}
-        </button>
+        />
 
-        {/* ==========================================
-            END CALL BUTTON
-            ========================================== */}
-        {/* 
-          *** MAIN CALL TERMINATION BUTTON ***
-          - This is the primary action button
-          - Customize colors and animations
-          - Add confirmation dialogs
-        */}
-        <button
-          onClick={leaveRoom}
-          className="w-20 h-16 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg transform hover:scale-105 active:scale-95"
-        >
-          <PhoneOff className="h-7 w-7 text-white" />
-        </button>
+        <ControlButton
+          handleClick={leaveRoom}
+          icon={PhoneOff}
+          className="bg-red-500 hover:bg-red-600 text-white"
+        />
 
-        {/* ==========================================
-            CAMERA CONTROL BUTTON (VIDEO CALLS ONLY)
-            ========================================== */}
         {callType === "video" && (
-          <button
-            onClick={toggleCam}
-            className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg ${
+          <ControlButton
+            handleClick={toggleCam}
+            icon={VideoOff}
+            activeIcon={Video}
+            isActive={isCameraEnabled}
+            className={cn(
               isCameraEnabled
-                ? "bg-gray-700/80 hover:bg-gray-600/80 text-white" // *** CAMERA ON STYLING ***
-                : "bg-gray-800 hover:bg-gray-700 text-red-400" // *** CAMERA OFF STYLING ***
-            }`}
-          >
-            {isCameraEnabled ? (
-              <Video className="h-6 w-6" />
-            ) : (
-              <VideoOff className="h-6 w-6" />
+                ? "bg-gray-700/80 hover:bg-gray-600/80 text-white"
+                : "bg-gray-800 hover:bg-gray-700 text-red-400"
             )}
-          </button>
+          />
         )}
 
-        {/* ==========================================
-            ADD MORE CONTROL BUTTONS HERE
-            ========================================== */}
-        {/* 
-          You can add more buttons like:
-          - Screen share button
-          - Chat button
-          - Settings button
-          - Participant list button
-          - Record button
-        */}
+        <ControlButton
+          handleClick={toggleShareScreen}
+          icon={ScreenShare}
+          activeIcon={ScreenShareOff}
+          isActive={isScreenShareEnabled}
+          className={cn(
+            isScreenShareEnabled
+              ? "bg-gray-700/80 hover:bg-gray-600/80 text-white"
+              : "bg-gray-800 hover:bg-gray-700 text-red-400"
+          )}
+        />
       </div>
     </div>
   );

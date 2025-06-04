@@ -1,0 +1,62 @@
+@keyframes subtle-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.06;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.08;
+  }
+}
+
+.pulse-ring {
+  position: absolute;
+  border-radius: 9999px;
+  background-color: white;
+  z-index: 40;
+}
+
+.pulse-ring-1 {
+  inset: -8px;
+  animation: subtle-pulse 2s ease-in-out infinite;
+}
+
+.pulse-ring-2 {
+  inset: -3px;
+  animation: subtle-pulse 2s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+/* Loading Dots Animation */
+.dots-animation {
+  display: inline-flex;
+  align-items: center;
+}
+
+.dots-animation .dot {
+  opacity: 0;
+  animation: dotFade 1.4s infinite;
+  margin: 0 1px;
+}
+
+.dots-animation .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dots-animation .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotFade {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}

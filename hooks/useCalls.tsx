@@ -3,9 +3,15 @@
 
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { useUser } from "@clerk/nextjs";
-import { useConvex } from "convex/react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useConvex, useQuery } from "convex/react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 // 📋 Define what a call looks like in our frontend
 interface CallData {
@@ -45,28 +51,19 @@ const CallContext = createContext<CallContextType | undefined>(undefined);
 // 🎯 THE MAIN PROVIDER COMPONENT
 export function CallProvider({ children }: { children: React.ReactNode }) {
   const convex = useConvex();
-  const { user, isLoaded } = useUser(); // Clerk user
+  const { userId: clerkId, isLoaded } = useAuth();
   const [activeCalls, setActiveCalls] = useState<CallData[]>([]);
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
 
-  // ✅ STEP 1: Convert Clerk user to our database user
+  const userData = useQuery(api.users.get, clerkId ? { clerkId } : "skip");
+
   useEffect(() => {
-    if (!user?.id) return;
+    if (userData) {
+      setUserId(userData._id);
+    }
+  }, [userData]);
 
-    const getUserId = async () => {
-      // You'll need to create this function in convex/users.ts
-      const userData = await convex?.query(api?.users?.get, {
-        clerkId: user?.id,
-      });
-
-      console.log(userData, "data user zeb");
-      if (userData) {
-        setUserId(userData._id);
-      }
-    };
-
-    getUserId();
-  }, [user?.id, convex]);
+  console.log(userId, " waaa user dzb");
 
   // ✅ STEP 2: Watch for active calls in real-time
   // This is the MAGIC - whenever a call is created, we'll know immediately
@@ -99,21 +96,21 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     activeCalls.find((call) => call.status === "active") || null;
 
   // ✅ STEP 4: Define our action functions
-  const initiateCall = async (
-    conversationId: Id<"conversations">,
-    type: "video" | "audio"
-  ) => {
-    if (!isLoaded || !userId) throw new Error("User not authenticated");
+  const initiateCall = useCallback(
+    async (conversationId: Id<"conversations">, type: "video" | "audio") => {
+      if (!isLoaded || !userId) throw new Error("User not authenticated");
 
-    console.log("🚀 Starting call:", { conversationId, type });
+      console.log("🚀 Starting call:", { conversationId, type });
 
-    const result = await convex?.mutation(api?.calls?.initiateCall, {
-      conversationId,
-      initiatorId: userId,
-      type,
-    });
-    return result;
-  };
+      const result = await convex?.mutation(api?.calls?.initiateCall, {
+        conversationId,
+        initiatorId: userId,
+        type,
+      });
+      return result;
+    },
+    [isLoaded, userId, convex]
+  );
 
   const answerCall = async (callId: Id<"calls">) => {
     if (!isLoaded || !userId) throw new Error("User not authenticated");

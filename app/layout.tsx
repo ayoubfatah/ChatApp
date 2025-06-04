@@ -47,14 +47,14 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ClerkProvider>
-            <CallProvider>
-              <ConvexClientProvider>
+            <ConvexClientProvider>
+              <CallProvider>
                 <OnlineStatusProvider>
                   <TooltipProvider>{children}</TooltipProvider>
                   <Toaster position="top-center" richColors />
                 </OnlineStatusProvider>
-              </ConvexClientProvider>
-            </CallProvider>
+              </CallProvider>
+            </ConvexClientProvider>
           </ClerkProvider>
         </ThemeProvider>
       </body>

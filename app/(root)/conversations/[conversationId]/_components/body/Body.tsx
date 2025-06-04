@@ -141,7 +141,8 @@ export default function Body({
       {typingUsers && typingUsers.length > 0 && (
         <TypingIndicator users={typingUsers} />
       )}
-      {!callType ? (
+      {/* {!callType ? ( */}
+      {1 > 2 ? (
         messages?.map((message, i) => {
           const seenMessage = message.isCurrentUser
             ? getSeenMessage(message.message._id)

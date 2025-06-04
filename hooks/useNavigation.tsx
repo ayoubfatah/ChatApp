@@ -21,7 +21,6 @@ export default function useNavigation() {
     return conversations?.reduce((acc, curr) => acc + curr.unSeenCount, 0) ?? 0;
   }, [conversations]);
 
-  console.log(conversations, "ss");
   const paths = useMemo(
     () => [
       {
