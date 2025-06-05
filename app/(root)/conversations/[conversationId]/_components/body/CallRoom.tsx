@@ -1,10 +1,10 @@
 "use client";
 
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { useCall } from "@/hooks/useCalls";
 import useConversation from "@/hooks/useConversation";
+import { cn } from "@/lib/utils";
 import { useUser } from "@clerk/nextjs";
 import {
   GridLayout,
@@ -33,16 +33,32 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import "./call-room.css";
-import PulseButton from "../callroomComponents/pulseButton";
 import ControlButton from "../callroomComponents/ControlButton";
-import { cn } from "@/lib/utils";
+import "./call-room.css";
+import WaitingForTokenUI from "../callroomComponents/WaitingForTokenUI";
+import CallerWaitingUI from "../callroomComponents/CallerWaitingUI";
+import ReceiverWaitingUI from "../callroomComponents/ReceiverWaitingUI";
+import CancelledCallUI from "../callroomComponents/CancelledCallUI";
 
 type CallRoomProps = {
   callType: "audio" | "video";
   setCallType: (type: "audio" | "video" | null) => void;
 };
 
+// v.literal("ringing"), // 📞 Call just started, waiting for answer
+// v.literal("active"), // ✅ Someone answered, call is ongoing
+// v.literal("ended"), // 🏁 Call finished normally
+// v.literal("rejected"), // ❌ Recipient declined
+// v.literal("missed"), // 📵 No one answered
+// v.literal("cancelled") // 🚫 Caller cancelled before answer
+
+type CallStatus =
+  | "ringing"
+  | "active"
+  | "ended"
+  | "rejected"
+  | "missed"
+  | "cancelled";
 // ==========================================
 // PORTAL WRAPPER - MAIN DIALOG CONTAINER
 // ==========================================
@@ -104,6 +120,7 @@ function CallDialog({ callType, setCallType }: CallRoomProps) {
 // ==========================================
 // MAIN CALL ROOM COMPONENT
 // ==========================================
+type Who = "caller" | "receiver";
 // This handles the core call functionality and UI states
 export default function CallRoom({ callType, setCallType }: CallRoomProps) {
   const { user, isLoaded, isSignedIn } = useUser();
@@ -112,7 +129,9 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
 
-  const status = "ringing";
+  const [status, setStatus] = useState<CallStatus>("ringing");
+  const [who, setWho] = useState<Who>("caller");
+
   const {
     activeCalls,
     incomingCalls, // These will trigger notification modals
@@ -187,16 +206,6 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
         console.log("✅ Connected to room");
         setToken(data.token);
 
-        // *** PARTICIPANT METADATA ***
-        // You can add more user info here (avatar, status, etc.)
-        roomInstance.localParticipant.setMetadata(
-          JSON.stringify({
-            username: user.fullName,
-            joinedAt: new Date().toISOString(),
-            // Add more metadata like: avatar, userType, etc.
-          })
-        );
-
         // *** CALL EVENTS YOU CAN HANDLE ***
         // roomInstance.on('participantConnected', (participant) => {
         //   console.log('Someone joined the call');
@@ -268,244 +277,129 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
   }
 
   // *** CONNECTION LOADING STATE ***
-  // if (token === "") {
-  //   return (
-  //     <div className="h-full flex items-center justify-center  bg-gradient-to-br from-slate-700 to-slate-800">
-  //       <div className="text-center text-white">
-  //         {/* Customize connecting UI here - you can add ringing sounds */}
-  //         <div className="animate-pulse">
-  //           <Phone className="h-16 w-16 mx-auto mb-4 text-blue-400" />
-  //           <p>Connecting...</p>
-  //           {/* Add ringing animation or sound here */}
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (token === "") {
+    <WaitingForTokenUI />;
+  }
 
   // CALLER WAITING  UI
 
-  // if (token === "" || status === "ringing") {
-  //   return (
-  //     <div className="h-full flex flex-col items-center justify-center  bg-gradient-to-br from-slate-700 to-slate-800 ">
-  //       {/* Customize connecting UI here - you can add ringing sounds */}
-  //       <div className="relative">
-  //         <div className="pulse-ring pulse-ring-1" />
-  //         <div className="pulse-ring pulse-ring-2" />
-  //         <Avatar className="size-[150px] z-[1000]">
-  //           <AvatarImage
-  //             src={
-  //               "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKggN5o0di2XQXBIO8M7oHrE_qIXo27PwzWw&s"
-  //             }
-  //           />
-  //         </Avatar>
-  //       </div>
-  //       <div className="my-4">
-  //         <span className="flex items-center gap-1 mt-4">
-  //           Waiting for Hitler to answer
-  //           <span className="dots-animation">
-  //             <span className="dot">.</span>
-  //             <span className="dot">.</span>
-  //             <span className="dot">.</span>
-  //           </span>
-  //         </span>
-  //       </div>
-  //       <div className="flex items-center gap-12 mt-6">
-  //         <PulseButton
-  //           icon={X}
-  //           handleClick={() => {
-  //             if (ongoingCall) {
-  //               endCall(ongoingCall._id);
-  //             }
-  //             setCallType(null);
-  //           }}
-  //           className=" bg-red-500 hover:bg-red-600"
-  //           iconClassName="text-white"
-  //           fill="white"
-  //         />
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  // RECEIVER UI
-
-  // if (token === "" || status === "ringing") {
-  //   return (
-  //     <div className="h-full flex flex-col items-center justify-center  bg-gradient-to-br from-slate-700 to-slate-800 ">
-  //       {/* Customize connecting UI here - you can add ringing sounds */}
-  //       <div className="">
-  //         <Avatar className="size-[150px]">
-  //           <AvatarImage
-  //             src={
-  //               "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKggN5o0di2XQXBIO8M7oHrE_qIXo27PwzWw&s"
-  //             }
-  //           />
-  //         </Avatar>
-  //       </div>
-  //       <div className="my-4">
-  //         <span className="flex items-center gap-1 mt-4">
-  //           hitler calling
-  //           <span className="dots-animation">
-  //             <span className="dot">.</span>
-  //             <span className="dot">.</span>
-  //             <span className="dot">.</span>
-  //           </span>
-  //         </span>
-  //       </div>
-  //       <div className="flex items-center gap-12 mt-6">
-  //         <PulseButton
-  //           icon={X}
-  //           handleClick={() => {
-  //             if (ongoingCall) {
-  //               endCall(ongoingCall._id);
-  //             }
-  //             setCallType(null);
-  //           }}
-  //           className=" bg-red-500 hover:bg-red-600"
-  //           iconClassName="text-white"
-  //           fill="white"
-  //         />
-
-  //         <PulseButton
-  //           icon={Phone}
-  //           handleClick={() => {
-  //             if (ongoingCall) {
-  //               answerCall(ongoingCall._id);
-  //             }
-  //           }}
-  //           className="bg-green-500 hover:bg-green-600"
-  //           fill="white"
-  //         />
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (token && status === "ringing") {
+    if (who === "caller") {
+      return <CallerWaitingUI callerName="Ayoub" onEndCall={() => {}} />;
+    }
+    if (who === "receiver") {
+      return (
+        <ReceiverWaitingUI
+          callerName="Ayoub"
+          onEndCall={() => {}}
+          answerCall={() => {}}
+          endCall={() => {}}
+          ongoingCall={{}}
+          setCallType={setCallType}
+        />
+      );
+    }
+  }
 
   // Canceled ui / Redical
 
-  // if (token === "" || status === "ringing") {
-  //   return (
-  //     <div className="h-full flex flex-col items-center justify-center  bg-gradient-to-br from-slate-700 to-slate-800 ">
-  //       {/* Customize connecting UI here - you can add ringing sounds */}
-  //       <div className="relative">
-  //         <Avatar className="size-[150px] z-[1000]">
-  //           <AvatarImage
-  //             src={
-  //               "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKggN5o0di2XQXBIO8M7oHrE_qIXo27PwzWw&s"
-  //             }
-  //           />
-  //         </Avatar>
-  //       </div>
-  //       <div className="my-4">
-  //         <div className="flex flex-col items-center gap-1 mt-4">
-  //           <h1 className="text-[34px] font-bold"> Hitler</h1>
-  //           <h1>Busy</h1>
-  //         </div>
-  //       </div>
-  //       <div className="flex items-center gap-12 mt-6">
-  //         <PulseButton
-  //           icon={X}
-  //           handleClick={() => {
-  //             if (ongoingCall) {
-  //               endCall(ongoingCall._id);
-  //             }
-  //             setCallType(null);
-  //           }}
-  //           className=" bg-red-500 hover:bg-red-600"
-  //           iconClassName="text-white"
-  //           fill="white"
-  //         />
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if ((token && status === "rejected") || (token && status === "cancelled")) {
+    return (
+      <CancelledCallUI
+        receiverName="Ayoub"
+        endCall={() => {}}
+        ongoingCall={{}}
+        setCallType={setCallType}
+      />
+    );
+  }
 
   // ==========================================
   // MAIN CONNECTED CALL UI
   // ==========================================
 
-  return (
-    <RoomContext.Provider value={roomInstance}>
-      {/* 
+  if (token && status === "active")
+    return (
+      <RoomContext.Provider value={roomInstance}>
+        {/* 
         *** MAIN CALL CONTAINER ***
         - Modify background colors/gradients here
         - Add custom backgrounds or patterns
       */}
-      <div className="h-full flex  bg-gradient-to-br from-slate-700 to-slate-800 relative overflow-hidden">
-        {/* ==========================================
+        <div className="h-full flex  bg-gradient-to-br from-slate-700 to-slate-800 relative overflow-hidden">
+          {/* ==========================================
             CALL HEADER - TOP BAR
             ========================================== */}
-        <div className="absolute top-0 left-0 right-0 z-20 bg-black/30 backdrop-blur-sm p-4">
-          <div className="flex items-center justify-between gap-7 text-white">
-            {/* *** USER INFO SECTION *** */}
-            <div className="flex items-center gap-2">
-              {" "}
-              {/* Added gap-2 for spacing */}
-              {/* 
+          <div className="absolute top-0 left-0 right-0 z-20 bg-black/30 backdrop-blur-sm p-4">
+            <div className="flex items-center justify-between gap-7 text-white">
+              {/* *** USER INFO SECTION *** */}
+              <div className="flex items-center gap-2">
+                {" "}
+                {/* Added gap-2 for spacing */}
+                {/* 
                 *** USER AVATAR ***
                 - Replace with actual user avatar
                 - Add online status indicators
                 - Customize avatar styling
               */}
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-sm font-semibold">
-                  {user?.fullName?.charAt(0) || "U"}
-                </span>
+                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-semibold">
+                    {user?.fullName?.charAt(0) || "U"}
+                  </span>
+                </div>
+                <div>
+                  {/* *** USER NAME DISPLAY *** */}
+                  <p className="font-medium">{user?.fullName}</p>
+                  {/* *** CALL DURATION DISPLAY *** */}
+                  <p className="text-sm text-gray-300">
+                    {formatDuration(callDuration)}
+                  </p>
+                </div>
               </div>
-              <div>
-                {/* *** USER NAME DISPLAY *** */}
-                <p className="font-medium">{user?.fullName}</p>
-                {/* *** CALL DURATION DISPLAY *** */}
-                <p className="text-sm text-gray-300">
-                  {formatDuration(callDuration)}
-                </p>
-              </div>
+
+              {/* *** MINIMIZE/MAXIMIZE BUTTON *** */}
+              <button
+                onClick={() => setIsMinimized(!isMinimized)}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              >
+                {isMinimized ? (
+                  <Maximize2 className="h-5 w-5" />
+                ) : (
+                  <Minimize2 className="h-5 w-5" />
+                )}
+              </button>
             </div>
-
-            {/* *** MINIMIZE/MAXIMIZE BUTTON *** */}
-            <button
-              onClick={() => setIsMinimized(!isMinimized)}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
-            >
-              {isMinimized ? (
-                <Maximize2 className="h-5 w-5" />
-              ) : (
-                <Minimize2 className="h-5 w-5" />
-              )}
-            </button>
           </div>
-        </div>
 
-        {/* ==========================================
+          {/* ==========================================
             MAIN VIDEO/AUDIO AREA
             ========================================== */}
-        <div
-          className={`transition-all duration-300 mx-auto my-auto w-full h-full flex items-center justify-center ${isMinimized ? "scale-75 " : ""}`} // Ensure this container allows MyVideoConference to take space
-        >
-          {/* This component handles video/audio display */}
-          <MyVideoConference callType={callType} />
-        </div>
+          <div
+            className={`transition-all duration-300 mx-auto my-auto w-full h-full flex items-center justify-center ${isMinimized ? "scale-75 " : ""}`} // Ensure this container allows MyVideoConference to take space
+          >
+            {/* This component handles video/audio display */}
+            <MyVideoConference callType={callType} />
+          </div>
 
-        {/* *** AUDIO RENDERER *** */}
-        {/* This handles the actual audio playback - don't remove */}
-        <RoomAudioRenderer />
+          {/* *** AUDIO RENDERER *** */}
+          {/* This handles the actual audio playback - don't remove */}
+          <RoomAudioRenderer />
 
-        {/* ==========================================
+          {/* ==========================================
             CALL CONTROLS - BOTTOM BAR
             ========================================== */}
-        <CustomControlBar callType={callType} setCallType={setCallType} />
+          <CustomControlBar callType={callType} setCallType={setCallType} />
 
-        {/* ==========================================
+          {/* ==========================================
             DECORATIVE ELEMENTS
             ========================================== */}
-        {/* 
+          {/* 
           *** ANIMATED BACKGROUND DOTS ***
           - Customize colors, sizes, positions
           - Add more decorative elements
           - Change animation types
         */}
-        {/* <div className="absolute inset-0 pointer-events-none">
+          {/* <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-20 left-10 w-2 h-2 bg-blue-400/30 rounded-full animate-pulse"></div>
           <div
             className="absolute top-32 right-16 w-1 h-1 bg-white/20 rounded-full animate-pulse"
@@ -516,9 +410,9 @@ export default function CallRoom({ callType, setCallType }: CallRoomProps) {
             style={{ animationDelay: "2s" }}
           ></div>
         </div> */}
-      </div>
-    </RoomContext.Provider>
-  );
+        </div>
+      </RoomContext.Provider>
+    );
 }
 
 // ==========================================
