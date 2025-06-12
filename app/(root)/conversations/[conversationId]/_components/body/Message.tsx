@@ -244,6 +244,30 @@ export default function Message({
                     </div>
                   </div>
                 )}
+                {type === "audio" && (
+                  <div className="message-box">
+                    <audio controls className="max-w-xs">
+                      <source src={content[0]} type="audio/mpeg" />
+                      Your browser does not support the audio element.
+                    </audio>
+                    <div className="flex items-center justify-between mt-2">
+                      <p
+                        className={cn(
+                          "text-[9px] flex items-center gap-2",
+                          fromCurrentUser
+                            ? "text-primary-foreground"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        {formatDistanceToNow(createdAt, {
+                          addSuffix: true,
+                        })}
+                        {!isGroup && seen}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {!fromCurrentUser && (
                   <DropdownMenuTrigger>
                     <Button

@@ -10,7 +10,7 @@ import { useMessageStore } from "@/store/useMessageStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "convex/react";
 import { ConvexError } from "convex/values";
-import { SendHorizonal, X } from "lucide-react";
+import { SendHorizonal, X, Mic } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import TextareaAutosize from "react-textarea-autosize";
@@ -19,6 +19,7 @@ import { z } from "zod";
 import { MessageActionsPopover } from "./MessageActionsPopover";
 import { useTheme } from "next-themes";
 import EmojiPicker, { Theme } from "emoji-picker-react";
+import AudioCapture from "./audio-capture";
 
 const chatMessageSchema = z.object({
   content: z.string().min(1, { message: "this field can't be empty" }),
@@ -61,6 +62,8 @@ export default function ChatInput() {
   });
 
   const content = form.watch("content", "");
+  const [showAudioCapture, setShowAudioCapture] = useState(false);
+
   useEffect(() => {
     if (isEditingMessage && editMessage) {
       textareaRef.current?.focus();
@@ -288,17 +291,30 @@ export default function ChatInput() {
                 </FormItem>
               )}
             />
-            <Button
-              disabled={isCreating || isEditing}
-              className=""
-              size="icon"
-              type="submit"
-            >
-              <SendHorizonal />
-            </Button>
+            {content.trim() ? (
+              <Button
+                disabled={isCreating || isEditing}
+                className=""
+                size="icon"
+                type="submit"
+              >
+                <SendHorizonal />
+              </Button>
+            ) : (
+              <Button
+                size="icon"
+                onClick={() => setShowAudioCapture(true)}
+                variant="outline"
+              >
+                <Mic />
+              </Button>
+            )}
           </form>
         </Form>
       </div>
+      {showAudioCapture && (
+        <AudioCapture onAudioSent={() => setShowAudioCapture(false)} />
+      )}
     </Card>
   );
 }

@@ -8,7 +8,7 @@ import {
 import { PopoverClose } from "@radix-ui/react-popover";
 
 import { PlusCircle, Smile } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { UploadFileDialog } from "../UploadFileDialog";
 
 type Props = { setEmojiPickerOpen: (value: boolean) => void };

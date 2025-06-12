@@ -194,3 +194,28 @@ export const getUserActiveCalls = query({
     return activeCalls;
   },
 });
+
+// 🚫 FUNCTION 6: Cancel a ringing call
+export const cancelCall = mutation({
+  args: {
+    callId: v.id("calls"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const call = await ctx.db.get(args.callId);
+    if (!call || call.status !== "ringing") {
+      throw new Error("Call not found or not ringing");
+    }
+
+    // Only the initiator can cancel the call
+    if (call.initiatorId !== args.userId) {
+      throw new Error("Only the initiator can cancel the call");
+    }
+
+    // Set status to cancelled
+    await ctx.db.patch(args.callId, {
+      status: "cancelled",
+      endedAt: Date.now(),
+    });
+  },
+});

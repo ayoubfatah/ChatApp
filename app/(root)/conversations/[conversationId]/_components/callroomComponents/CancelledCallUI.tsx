@@ -15,7 +15,7 @@ type CanceledCallUIProps = {
 
 export default function CanceledCallUI({
   receiverName,
-  receiverImg = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKggN5o0di2XQXBIO8M7oHrE_qIXo27PwzWw&s",
+  receiverImg = "",
   endCall,
   setCallType,
   ongoingCall,

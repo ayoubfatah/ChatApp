@@ -42,6 +42,10 @@ interface CallContextType {
   answerCall: (callId: Id<"calls">) => Promise<string>;
   rejectCall: (callId: Id<"calls">) => Promise<void>;
   endCall: (callId: Id<"calls">) => Promise<void>;
+  cancelCall: (args: {
+    callId: Id<"calls">;
+    userId: Id<"users">;
+  }) => Promise<void>;
   isInCall: boolean; // Quick check if user is in any call
 }
 
@@ -63,14 +67,10 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     }
   }, [userData]);
 
-  console.log(userId, " waaa user dzb");
-
   // ✅ STEP 2: Watch for active calls in real-time
   // This is the MAGIC - whenever a call is created, we'll know immediately
   useEffect(() => {
     if (!userId) return;
-
-    console.log("👀 Starting to watch for calls for user:", userId);
 
     const unsubscribe = convex
       ?.watchQuery(api?.calls?.getUserActiveCalls, { userId })
@@ -147,6 +147,17 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const cancelCall = async (args: {
+    callId: Id<"calls">;
+    userId: Id<"users">;
+  }) => {
+    if (!isLoaded || !userId) throw new Error("User not authenticated");
+
+    console.log("🚫 Cancelling call:", args.callId);
+
+    await convex?.mutation(api?.calls?.cancelCall, args);
+  };
+
   // ✅ STEP 5: Provide everything to child components
   return (
     <CallContext.Provider
@@ -158,6 +169,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
         answerCall,
         rejectCall,
         endCall,
+        cancelCall,
         isInCall: !!ongoingCall,
       }}
     >

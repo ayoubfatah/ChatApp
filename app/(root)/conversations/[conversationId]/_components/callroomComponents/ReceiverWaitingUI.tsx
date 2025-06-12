@@ -17,7 +17,7 @@ type ReceiverWaitingUIProps = {
 
 export default function ReceiverWaitingUI({
   callerName,
-  callerAvatar = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKggN5o0di2XQXBIO8M7oHrE_qIXo27PwzWw&s",
+  callerAvatar = "",
   endCall,
   answerCall,
   ongoingCall,

@@ -20,9 +20,11 @@ export const getMessagesContent = (type: string, content: string) => {
       return content;
 
     case "imageUploader":
-      return "[Image]";
+      return "Sent an Image";
     case "file":
       return "Sent A file ";
+    case "audio":
+      return "sent an audio clip ";
     default:
       return "[Non-text]";
   }

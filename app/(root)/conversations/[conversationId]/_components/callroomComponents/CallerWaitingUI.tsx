@@ -12,7 +12,7 @@ type CallerWaitingUIProps = {
 
 export default function CallerWaitingUI({
   callerName,
-  callerAvatar = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKggN5o0di2XQXBIO8M7oHrE_qIXo27PwzWw&s",
+  callerAvatar = "",
   onEndCall,
 }: CallerWaitingUIProps) {
   return (
